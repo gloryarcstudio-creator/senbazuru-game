@@ -296,6 +296,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 .imodes th:first-child,.imodes td:first-child{width:34%}
 .itbl td:last-child{font:400 1.15em var(--font-display)}
 .itbl .sc{display:inline-flex;align-items:center;gap:.35em}
+.ictl{width:100%;text-align:start;margin:.6em auto 1em;border-collapse:collapse}.ictl td{border-bottom:1px solid rgba(241,234,216,.12)}.ictl td{vertical-align:top;padding:.4em .6em}.ictl td:first-child{width:28%;color:var(--gold);overflow-wrap:anywhere}.ictl td:last-child{font:inherit}
 .itbl .sc img{width:1.7em;height:1.7em}
 .imax{margin:.1em 0 .25em;font:400 3em/1 var(--font-display);color:var(--gold);text-shadow:0 .05em 0 var(--gold-deep),0 .12em .15em rgba(5,8,24,.6)}
 #infoSheet .irtp{margin-top:2.2em;font:400 1.15em/1.3 var(--font-display);color:var(--paper)}
@@ -313,7 +314,8 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 #autoModal .pills{margin:.45em 0 .2em}
 #autoModal .pill{min-width:3.6em;padding:.45em .7em .36em;font-size:.95em}
 #betPills{max-height:52vh;overflow:auto;margin-bottom:.2em}
-#betPills .pill{flex:1 0 5.6em}
+#betPills{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--pw,5.6em)),1fr));gap:.5em;width:min(calc(100vw - 7em),calc(var(--cols,5) * var(--pw,5.6em) + (var(--cols,5) - 1) * .5em))}
+#betPills .pill{white-space:nowrap;padding-left:.3em;padding-right:.3em;font-size:1em;min-width:0}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:1.2em;padding:.6em 0;border-bottom:1px dashed rgba(23,34,77,.3);min-width:min(19em,70vw)}
 /* переключатель 256×103: включён — красный, кружок справа */
 .switch{position:relative;flex:none;width:3.6em;height:1.45em;border:0;border-radius:1em;padding:0;background:url("assets/ui/toggle_off.webp") 0 0/100% 100% no-repeat;cursor:pointer;font:inherit}
@@ -724,7 +726,7 @@ const PARAM = {
   // повтор раунда
   intro: qs.get('intro'),   // intro=0 — без интро студии (автотесты)
   replay: qs.get('replay') === 'true', game: qs.get('game'), version: qs.get('version'),
-  mode: (qs.get('mode') || 'BASE').toUpperCase(), event: qs.get('event'), amount: Math.round(Number(qs.get('amount'))) || 0
+  mode: (qs.get('mode') || 'BASE').toUpperCase(), modeRaw: qs.get('mode') || 'base', event: qs.get('event'), amount: Math.round(Number(qs.get('amount'))) || 0
 };
 
 /* ================= тексты =================
@@ -832,7 +834,8 @@ const RGS = {
     return data;
   },
   authenticate() { return this.request('POST', '/wallet/authenticate', { sessionID: this.session, language: lang }); },
-  play(amount, mode) { return this.request('POST', '/wallet/play', { sessionID: this.session, amount, mode, currency: G.currency }); },
+  // имена режимов в RGS — как в index.json выгрузки (строчные); внутри игры — заглавные ключи CONFIG.modes
+  play(amount, mode) { return this.request('POST', '/wallet/play', { sessionID: this.session, amount, mode: String(mode).toLowerCase(), currency: G.currency }); },
   endRound() { return this.request('POST', '/wallet/end-round', { sessionID: this.session }); },
   replay(game, version, mode, event) { return this.request('GET', '/bet/replay/' + [game, version, mode, event].map(encodeURIComponent).join('/')); }
 };
@@ -1517,6 +1520,7 @@ function setupBets(cfg, resumeAmount) {
     levels = levels.filter(ok);
   }
   if (!levels.length) levels = [cfg.defaultBetLevel || min || CONFIG.apiUnit];
+  if (resumeAmount > 0 && !levels.includes(resumeAmount)) levels.push(resumeAmount);   // ставка незавершённого раунда
   G.betLevels = Array.from(new Set(levels)).sort((a, b) => a - b);
   let idx = -1;
   for (const want of [resumeAmount, Number(store('bet.' + G.currency)), cfg.defaultBetLevel]) { if (idx < 0 && want) idx = G.betLevels.indexOf(want); }
@@ -1691,10 +1695,16 @@ function buildInfo() {
   mt += '</table>';
   h += sec(T('factMax'), '<div class="imax">' + vars.max + '×</div>' + P('maxText') + P('maxText2') + mt);
 
-  // 9) RTP — только по флагу юрисдикции
+  // 9) кнопки: что делает каждая (гид по интерфейсу; строки скрытых флагами кнопок не показываются)
+  const ctl = [['aSpin', 'ctlSpin'], !J.disabledTurbo && ['aTurbo', 'ctlTurbo'], !J.disabledAutoplay && ['aAuto', 'ctlAuto'],
+    ['− / +', 'ctlBet'], ['aBetMenu', 'ctlBetMenu'], ['aBonus', 'ctlBonus'], ['menu', 'ctlMenu'], ['aInfo', 'ctlInfo'],
+    ['settings', 'ctlSettings'], ['aSound', 'ctlSound'], !J.disabledSpacebar && ['ctlSpaceT', 'ctlSpace'], !J.disabledSlamstop && ['ctlSlamT', 'ctlSlam'], ['aClose', 'ctlClose']].filter(Boolean);
+  h += sec(T('secControls'), '<table class="ictl">' + ctl.map(([n, d]) => '<tr><td><b>' + esc(n.includes('/') ? n : t(n)) + '</b></td><td>' + T(d) + '</td></tr>').join('') + '</table>');
+
+  // 10) RTP — только по флагу юрисдикции
   if (J.displayRTP) h += '<p class="irtp">' + T('rtpLine') + '</p>';
 
-  // 10) сборка и юридический текст — в самом низу
+  // 11) сборка и юридический текст — в самом низу
   h += '<p class="ibuild">' + (G.live ? '' : T('demoNote') + ' ') + T('build') + ' ' + esc(BUILD) + '</p>';
   h += '<p class="ilegal" lang="en">' + LEGAL.map(esc).join(' ') + '</p>';
   $('infoSheet').innerHTML = h;
@@ -1705,6 +1715,9 @@ function buildInfo() {
 /* меню выбора ставки */
 function openBetMenu() {
   const box = $('betPills'); box.textContent = '';
+  // ширина кнопки — по самой длинной сумме (MX$15,000.00, ¥150,000): суммы не переносятся
+  box.style.setProperty('--pw', (Math.max(...G.betLevels.map(v => money(v).length)) * 0.62 + 1.2).toFixed(2) + 'em');
+  box.style.setProperty('--cols', G.betLevels.length > 20 ? 5 : 4);
   G.betLevels.forEach((v, i) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'pill' + (i === G.betIdx ? ' sel' : ''); b.textContent = money(v);
     b.onclick = () => { Snd.click(); setBet(i); closeModal(); };
@@ -2046,7 +2059,7 @@ async function bootReplay() {
   $('btnReplay').onclick = runReplay;
   try {
     if (!RGS.root || !PARAM.game || !PARAM.version || PARAM.event === null) throw new Error('replay params');
-    const [data] = await Promise.all([RGS.replay(PARAM.game, PARAM.version, PARAM.mode, PARAM.event), loadAssets(p => { $('ldFill').style.width = Math.round(p * 100) + '%'; })]);
+    const [data] = await Promise.all([RGS.replay(PARAM.game, PARAM.version, PARAM.modeRaw, PARAM.event), loadAssets(p => { $('ldFill').style.width = Math.round(p * 100) + '%'; })]);
     G.replay.data = data;
   } catch (e) {
     console.error(e); try { await loadAssets(() => {}); } catch (e2) { /* без картинок останется только сообщение */ }
@@ -2197,9 +2210,10 @@ async function boot() {
   requestAnimationFrame(frame);
   // незавершённый раунд из прошлой сессии: показать результат и закрыть
   if (resume) {
-    if (resume.amount && resume.amount !== G.bet) { G.bet = resume.amount; showBet(); }
+    const rMode = String(resume.mode || 'BASE').toUpperCase();
+    if (rMode === 'ANTE') { G.ante = true; showBet(); }   // анте включён, как в прерванном раунде
     G.busy = true; updateButtons(); startReels();
-    await finishRound(resume, resume.mode || 'BASE', 0, G.bet);
+    await finishRound(resume, CONFIG.modes[rMode] ? rMode : 'BASE', 0, G.bet);
     G.busy = false; updateButtons();
   }
 }

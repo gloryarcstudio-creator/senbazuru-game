@@ -108,6 +108,7 @@ function rgsReply(method, pathname, body) {
   const bal = () => ({ amount: s.balance, currency: s.currency });
   if (pathname === '/wallet/authenticate') return [200, { balance: bal(), config: s.config, round: s.active, meta: null }];
   if (pathname === '/wallet/play') {
+    body.mode = String(body.mode).toUpperCase();   // игра шлёт имена из index.json (строчные)
     const mode = M.CONFIG.modes[body.mode];
     if (!mode || !Number.isInteger(body.amount)) return [400, { error: 'ERR_VAL' }];
     const cost = Math.round(body.amount * mode.cost);
@@ -462,7 +463,7 @@ await run('ui', async () => {
     if (!(await visible(page, '#infoModal')) || !info.includes('Paytable') || !info.includes('Free spins — trigger and retrigger')) bad('меню', 'Info не открыл правила с таблицей выплат');
     // порядок разделов и юридический текст в самом низу
     const order = await page.evaluate(() => Array.from(document.querySelectorAll('#infoSheet h3')).map(e => e.textContent));
-    const want = ['Special symbols', 'Lines', 'Paytable', 'How WILD works', 'Free spins — trigger and retrigger', 'Bonus modes', 'Max win'];
+    const want = ['Special symbols', 'Lines', 'Paytable', 'How WILD works', 'Free spins — trigger and retrigger', 'Bonus modes', 'Max win', 'Buttons'];
     if (JSON.stringify(order) !== JSON.stringify(want)) bad('правила', 'порядок разделов: ' + order.join(' / '));
     const last = await page.evaluate(() => document.querySelector('#infoSheet > :last-child').textContent);
     if (!last.startsWith('Malfunction voids all wins and plays.') || !/TM and © \d{4} Engine\.$/.test(last)) bad('правила', 'юридический текст не в самом низу: ' + last.slice(0, 60));
