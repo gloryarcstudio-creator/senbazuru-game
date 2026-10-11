@@ -1,0 +1,7 @@
+build/
+dist/
+shots/
+node_modules/
+math/stake/books_*.jsonl.zst
+*.pyc
+__pycache__/
