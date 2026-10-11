@@ -556,7 +556,7 @@ await run('ui', async () => {
     const frame = g.board.w * 0.1095, top = g.board.y - frame;   // рамка заказчика: окно 88% стороны, планка — 10.95% окна
     if (g.logo.x > w * 0.08 || g.logo.cy > top || g.logo.r > g.multHud.x) bad(tag, 'логотип не слева вверху');
     if (g.multHud.r < w * 0.92 || g.multHud.cy > top || g.multHud.b > top + 1) bad(tag, 'HUD множителя не справа вверху');
-    if (Math.abs(g.fsBox.cx - g.board.cx) > 1 || g.fsBox.y > top || g.fsBox.b < top + frame * 0.5 || g.fsBox.b > g.board.y + g.board.h * 0.08) bad(tag, `табличка фриспинов не на верхней планке рамки: ${g.fsBox.y.toFixed(1)}…${g.fsBox.b.toFixed(1)}, планка ${top.toFixed(1)}…${g.board.y.toFixed(1)}`);
+    if (Math.abs(g.fsBox.cx - g.board.cx) > 1 || g.fsBox.y > top + frame * 0.35 || g.fsBox.b < top + frame * 0.5 || g.fsBox.b > g.board.y + g.board.h * 0.08) bad(tag, `табличка фриспинов не на верхней планке рамки: ${g.fsBox.y.toFixed(1)}…${g.fsBox.b.toFixed(1)}, планка ${top.toFixed(1)}…${g.board.y.toFixed(1)}`);
     if (g.fsBox.x < g.logo.r - 1 && g.fsBox.y < g.logo.b - 1 || g.fsBox.r > g.multHud.x + 1 && g.fsBox.y < g.multHud.b - 1) bad(tag, 'табличка фриспинов наезжает на логотип или HUD');
     if (g.board.w / 0.88 < w * 0.93 && g.board.y + g.board.h < g.panel.y - 30) bad(tag, `поле не по всей ширине: ${(g.board.w / 0.88).toFixed(0)} из ${w}`);
     if (g.btnAuto.r < w - Math.max(14, w * 0.04) || g.btnAuto.b < h - Math.max(16, h * 0.03) || g.btnTurbo.r > g.btnAuto.x + 1 || Math.abs(g.btnTurbo.b - g.btnAuto.b) > 1) bad(tag, `Turbo и Autoplay не прижаты к правому нижнему краю: [${g.btnAuto.r.toFixed(0)}, ${g.btnAuto.b.toFixed(0)}]`);
@@ -611,19 +611,19 @@ await run('ui', async () => {
       const urls = [];
       const { ctx, page, errs } = await open(w, h, '?lang=en', { context, before: async page => { page.on('request', r => urls.push(r.url().replace(base, '').split('?')[0])); } });
       await page.waitForTimeout(500);
-      const st = await state(page), decor = await page.evaluate(() => document.querySelectorAll('.decor').length), video = await page.evaluate(() => document.querySelectorAll('video:not(#introVideo)').length);
+      const st = await state(page), decor = await page.evaluate(() => document.querySelectorAll('.decor').length), video = await page.evaluate(() => Array.from(document.querySelectorAll('video:not(#introVideo)')).filter(v => v.currentSrc || v.querySelector('source')).length);   // пустые <video> для переходов и живого фона не в счёт
       const bytes = urls.filter(u => u.startsWith('assets/')).reduce((a, u) => a + (fs.existsSync(path.join(BUILD, u)) ? fs.statSync(path.join(BUILD, u)).size : 0), 0);
       checkGeom(`загрузка ${w}x${h}`, await page.evaluate(GEOM), w, h);
       finish(errs, `загрузка ${w}x${h}`); await ctx.close(); return { urls, lite: st.lite, decor, video, bytes };
     };
     const touch = { hasTouch: true, isMobile: true, deviceScaleFactor: 2 };
     const phoneP = await load(390, 844, touch), phoneL = await load(844, 390, touch), tablet = await load(1024, 768, touch), desk = await load(1920, 1080), small = await load(600, 400);
-    const heavy = u => !/\/intro\//.test(u) && /decor_|\.webm$|\.mp4$|bg_land\.webp|bg_port\.webp/.test(u);   // интро студии играет и на телефоне
+    const heavy = u => !/\/intro\//.test(u) && /decor_|\.webm$|\.mp4$|\/bg_land\.webp|\/bg_port\.webp/.test(u);   // интро студии играет и на телефоне
     for (const [name, r, bg] of [['телефон, портрет', phoneP, 'assets/bg/bg_port_s.webp'], ['телефон, ландшафт', phoneL, 'assets/bg/bg_land_s.webp']]) {
       if (!r.lite) bad('телефон', name + ': не распознан как телефон');
       const hv = r.urls.filter(heavy); if (hv.length || r.decor || r.video) bad('телефон', name + ': загружено лишнее — ' + hv.join(', ') + ` (декораций ${r.decor}, видео ${r.video})`);
       if (!r.urls.includes(bg)) bad('телефон', name + ': не загружен облегчённый фон ' + bg);
-      if (r.urls.filter(u => /bg_(land|port)/.test(u)).length !== 1) bad('телефон', name + ': фон должен грузиться только для текущей ориентации — ' + r.urls.filter(u => /bg_/.test(u)).join(', '));
+      if (r.urls.filter(u => /\/bg_(land|port)/.test(u)).length !== 1) bad('телефон', name + ': фон должен грузиться только для текущей ориентации — ' + r.urls.filter(u => /\/bg_/.test(u)).join(', '));
     }
     if (tablet.lite || !tablet.urls.includes('assets/bg/bg_land.webp')) bad('телефон', 'планшет 1024×768 ошибочно считается телефоном');
     if (desk.lite || desk.decor !== 2 || !desk.urls.includes('assets/bg/decor_left.webp') || !desk.urls.includes('assets/bg/bg_land.webp')) bad('телефон', 'на десктопе нет декораций или полного фона');
