@@ -114,7 +114,7 @@ for (const name of Object.keys(picked)) for (const w of picked[name]) {
   await page.waitForTimeout(250);
   const st = await page.evaluate(() => window.__game.state), sent = S.log[S.log.length - 1] || {};
   const win = Math.round(BET * w.book.payoutMultiplier / 100), cost = Math.round(BET * modes[name].cost);
-  if (String(sent.mode) !== feMode || sent.amount !== BET) bad(tag, `запрос play: mode ${sent.mode}, amount ${sent.amount}`);
+  if (String(sent.mode) !== name || sent.amount !== BET) bad(tag, `запрос play: mode ${sent.mode}, amount ${sent.amount}`);
   if (st.win !== win) bad(tag, `на экране ${st.win / U}, в книге ${win / U}`);
   if (st.balance !== S.balance || S.balance !== before - cost + win) bad(tag, `баланс ${st.balance / U}, ожидался ${(before - cost + win) / U}`);
   if (st.fs || st.sticky) bad(tag, 'после раунда остался режим фриспинов');

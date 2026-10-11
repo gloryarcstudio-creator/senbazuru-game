@@ -29,7 +29,7 @@ const BUILD = path.resolve(arg('build', path.join(ROOT, 'build')));
 const SHOTS = path.resolve(arg('shots', path.join(ROOT, 'shots')));
 const ALL = ['sizes', 'ui', 'demo', 'rgs', 'currencies', 'flags', 'social', 'replay', 'i18n'];
 const ONLY = arg('only') ? arg('only').split(',') : ALL;
-const SIZES = [[1920, 1080], [1280, 720], [1024, 768], [844, 390], [600, 900], [390, 844], [375, 667], [400, 225]];
+const SIZES = [[1920, 1080], [1280, 592], [1024, 576], [800, 450], [400, 225], [390, 844], [320, 568], [430, 932], [812, 375]];   // этап 8 инструкций проекта + 1920×1080
 const LANGS = ['en', 'ru', 'de', 'es', 'fr', 'pt', 'tr', 'pl', 'fi', 'id', 'vi', 'ja', 'ko', 'zh', 'hi', 'ar'];
 const MIME = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.mp3': 'audio/mpeg', '.js': 'text/javascript', '.webm': 'video/webm', '.mp4': 'video/mp4' };
 const M = require(path.join(BUILD, 'assets/js/math.js'));
@@ -50,7 +50,8 @@ const SEED = {
   bonus: findSeed('BASE', b => has(b, 'freeSpinTrigger') && !has(b, 'retrigger') && b.payoutMultiplier >= 3000 && b.payoutMultiplier <= 40000),
   retrig: findSeed('BONUS', b => has(b, 'retrigger') && b.payoutMultiplier > 0),
   sup: findSeed('SUPER', b => b.payoutMultiplier >= 5000),
-  cap: findSeed('SUPER', b => has(b, 'wincap'))
+  cap: findSeed('SUPER', b => has(b, 'wincap')),
+  tease: findSeed('BASE', b => !has(b, 'freeSpinTrigger') && b.payoutMultiplier < 1000 && [0, 1].every(i => b.events[0].board[i].some(c => c.name === 'S')))   // скаттеры на 1-м и 2-м барабанах → anticipation
 };
 const book = (mode, seed) => M.book(mode, seed);
 const simpleRound = hundredths => [   // раунд из четырёх событий с заданным выигрышем
@@ -58,11 +59,12 @@ const simpleRound = hundredths => [   // раунд из четырёх собы
   { index: 1, type: 'winInfo', totalWin: hundredths, wins: [{ symbol: 'H1', kind: 3, win: hundredths, positions: [{ reel: 0, row: 4 }, { reel: 2, row: 0 }, { reel: 4, row: 2 }], meta: { lineIndex: 0, multiplier: 1, winWithoutMult: hundredths } }] },
   { index: 2, type: 'setTotalWin', amount: hundredths }, { index: 3, type: 'finalWin', amount: hundredths }];
 
-/* 15 валют: баланс, ставка и множитель выплаты от «сервера» и то, что должно быть на экране */
+/* 16 валют: баланс, ставка и множитель выплаты от «сервера» и то, что должно быть на экране */
 const CUR = {
   USD: { bal: 1234.5, bet: 2, mult: 7.77, show: ['$1,234.50', '$2.00', '$15.54'] },
   EUR: { bal: 1234.5, bet: 2, mult: 7.77, show: ['€1,234.50', '€2.00', '€15.54'] },
-  JPY: { bal: 150000, bet: 100, mult: 7.77, show: ['¥150,000.00', '¥100.00', '¥777.00'] },
+  JPY: { bal: 150000, bet: 100, mult: 7.77, show: ['¥150,000', '¥100', '¥777'] },
+  MXN: { bal: 1234.5, bet: 2, mult: 7.77, show: ['MX$1,234.50', 'MX$2.00', 'MX$15.54'] },
   BRL: { bal: 1234.5, bet: 2, mult: 7.77, show: ['R$1,234.50', 'R$2.00', 'R$15.54'] },
   INR: { bal: 1234.5, bet: 2, mult: 7.77, show: ['₹1,234.50', '₹2.00', '₹15.54'] },
   TRY: { bal: 1234.5, bet: 2, mult: 7.77, show: ['₺1,234.50', '₺2.00', '₺15.54'] },
@@ -72,9 +74,9 @@ const CUR = {
   LTC: { bal: 100, bet: 0.1, mult: 7.77, show: ['100.00' + NB + 'LTC', '0.10' + NB + 'LTC', '0.777' + NB + 'LTC'] },
   DOGE: { bal: 50000, bet: 10, mult: 7.77, show: ['50,000.00' + NB + 'DOGE', '10.00' + NB + 'DOGE', '77.70' + NB + 'DOGE'] },
   USDT: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'USDT', '2.00' + NB + 'USDT', '15.54' + NB + 'USDT'] },
-  XGC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'GC', '2.00' + NB + 'GC', '15.5400' + NB + 'GC'] },
-  XSC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.5400' + NB + 'SC'] },
-  XEC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.5400' + NB + 'SC'] }
+  XGC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'GC', '2.00' + NB + 'GC', '15.54' + NB + 'GC'] },
+  XSC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.54' + NB + 'SC'] },
+  XEC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.54' + NB + 'SC'] }
 };
 const FLAGS = { disabledTurbo: true, disabledAutoplay: true, disabledBuyFeature: true, disabledSpacebar: true, disabledSlamstop: true, displayRTP: true, minimumRoundDuration: 4000, socialCasino: true };
 const NO_FLAGS = { socialCasino: false, disabledFullscreen: false, disabledTurbo: false, disabledSuperTurbo: false, disabledAutoplay: false, disabledSlamstop: false, disabledSpacebar: false, disabledBuyFeature: false, displayNetPosition: false, displayRTP: false, displaySessionTimer: false, minimumRoundDuration: 0 };
@@ -106,6 +108,7 @@ function rgsReply(method, pathname, body) {
   const bal = () => ({ amount: s.balance, currency: s.currency });
   if (pathname === '/wallet/authenticate') return [200, { balance: bal(), config: s.config, round: s.active, meta: null }];
   if (pathname === '/wallet/play') {
+    body.mode = String(body.mode).toUpperCase();   // игра шлёт имена из index.json (строчные)
     const mode = M.CONFIG.modes[body.mode];
     if (!mode || !Number.isInteger(body.amount)) return [400, { error: 'ERR_VAL' }];
     const cost = Math.round(body.amount * mode.cost);
@@ -259,7 +262,7 @@ async function open(w, h, query = '', opts = {}) {
   const page = await ctx.newPage(); const errs = [];
   page.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !(opts.allow && opts.allow.test(m.text()))) errs.push(`[${m.type()}] ${m.text()}`); });
   page.on('pageerror', e => errs.push('[pageerror] ' + e.message));
-  page.on('requestfailed', r => errs.push('[requestfailed] ' + r.url()));
+  page.on('requestfailed', r => { const f = r.failure() ? r.failure().errorText : ''; if (f === 'net::ERR_ABORTED' && /\.(webm|mp4)\b/.test(r.url())) return; errs.push('[requestfailed] ' + r.url() + ' ' + f); });   // прерванная загрузка видео при закрытии страницы — не ошибка
   page.on('response', r => { if (r.status() >= 400 && !(opts.allow && opts.allow.test(r.url()))) errs.push(`[${r.status()}] ${r.url()}`); });
   if (opts.before) await opts.before(page);
   await page.goto(base + query + (query.includes('?') ? '&' : '?') + 'intro=0');   // интро студии проверяется отдельно (раздел ui)
@@ -357,7 +360,7 @@ await run('sizes', async () => {
 
 /* ================= ui ================= */
 await run('ui', async () => {
-  const css = (page, sel, prop) => page.evaluate(([s, p]) => getComputedStyle(document.querySelector(s))[p], [sel, prop]);
+  const css = (page, sel, prop) => page.evaluate(([s, p]) => { const cs = getComputedStyle(document.querySelector(s)); return p.startsWith('--') ? cs.getPropertyValue(p).trim() : cs[p]; }, [sel, prop]);
   // 1) верхняя строка «Balance | Win | Bet» и нижняя строка кнопок; на десктопе центр Win = центр спина
   const centres = [];
   for (const [w, h] of [[1920, 1080], [1280, 720], [1024, 768], [1600, 900], [1366, 768]]) {
@@ -370,7 +373,7 @@ await run('ui', async () => {
     if (!(g.balanceBox.r <= g.winBox.x && g.winBox.r <= g.betGroup.x) || Math.abs(g.balanceBox.cy - g.winBox.cy) > 1 || Math.abs(g.betBox.cy - g.winBox.cy) > 1) bad(tag, 'верхняя строка не «Balance | Win | Bet»');
     if (!(g.btnBetDown.r <= g.betBox.x + 1 && g.btnBetUp.x >= g.betBox.r - 1)) bad(tag, 'кнопки − и + не по сторонам от Bet');
     if (!(g.btnMenu.r <= g.btnBonus.x && g.btnBonus.r < g.btnSpin.x && g.btnSpin.r < g.btnTurbo.x && g.btnTurbo.r <= g.btnAuto.x)) bad(tag, 'нижняя строка не «Menu Bonus | Spin | Turbo Autoplay»');
-    for (const id of ['btnMenu', 'btnBonus']) if (Math.abs(g[id].w - g[id].h) > 0.5 || !(parseFloat(await css(page, '#' + id, 'borderTopLeftRadius')) >= 10)) bad(tag, id + ' не квадратная со скруглением');
+    for (const [id, img] of [['btnMenu', 'btn_menu'], ['btnBonus', 'btn_bonus']]) if (Math.abs(g[id].w - g[id].h) > 0.5 || !(await css(page, '#' + id, '--img')).includes(img + '.webp')) bad(tag, id + ' не квадратная картинка ' + img);
     if (g.btnSpin.w < g.btnMenu.w * 1.25) bad(tag, 'спин не крупнее остальных кнопок');
     const green = await page.evaluate(() => getComputedStyle(document.getElementById('btnSpin')).getPropertyValue('--c').trim() + '|' + getComputedStyle(document.getElementById('app')).getPropertyValue('--spin').trim());
     if (!/2fb364/i.test(green)) bad(tag, 'спин не зелёный: ' + green);
@@ -394,7 +397,7 @@ await run('ui', async () => {
     const snd = () => page.evaluate(() => { const b = document.getElementById('btnSound'), cs = getComputedStyle(b), d = s => getComputedStyle(b.querySelector(s)).display !== 'none';
       return { off: b.classList.contains('off'), pressed: b.getAttribute('aria-pressed'), on: d('.ico-on'), cross: d('.ico-off'), color: cs.color, shadow: cs.boxShadow, filter: cs.filter, bg: cs.getPropertyValue('--c').trim(), sound: window.__game.state.sound }; });
     let s1 = await snd();
-    if (s1.off || !s1.on || s1.cross || s1.color !== 'rgb(255, 255, 255)' || !/59, 224, 127/.test(s1.shadow) || !s1.sound) bad('звук', 'включённый звук: ' + JSON.stringify(s1));
+    if (s1.off || !s1.on || s1.cross || s1.color !== 'rgb(255, 255, 255)' || !/59, 224, 127/.test(s1.shadow + s1.filter) || !s1.sound) bad('звук', 'включённый звук: ' + JSON.stringify(s1));
     await page.click('#btnSound'); await page.waitForTimeout(200); await shot(page, 'ui_menu_sound_off');
     let s2 = await snd();
     if (!s2.off || s2.on || !s2.cross || s2.color === 'rgb(255, 255, 255)' || /59, 224, 127/.test(s2.shadow) || !/brightness/.test(s2.filter) || s2.sound || s2.pressed !== 'false') bad('звук', 'выключенный звук: ' + JSON.stringify(s2));
@@ -460,7 +463,7 @@ await run('ui', async () => {
     if (!(await visible(page, '#infoModal')) || !info.includes('Paytable') || !info.includes('Free spins — trigger and retrigger')) bad('меню', 'Info не открыл правила с таблицей выплат');
     // порядок разделов и юридический текст в самом низу
     const order = await page.evaluate(() => Array.from(document.querySelectorAll('#infoSheet h3')).map(e => e.textContent));
-    const want = ['Special symbols', 'Lines', 'Paytable', 'How WILD works', 'Free spins — trigger and retrigger', 'Bonus modes', 'Max win'];
+    const want = ['Special symbols', 'Lines', 'Paytable', 'How WILD works', 'Free spins — trigger and retrigger', 'Bonus modes', 'Max win', 'Buttons'];
     if (JSON.stringify(order) !== JSON.stringify(want)) bad('правила', 'порядок разделов: ' + order.join(' / '));
     const last = await page.evaluate(() => document.querySelector('#infoSheet > :last-child').textContent);
     if (!last.startsWith('Malfunction voids all wins and plays.') || !/TM and © \d{4} Engine\.$/.test(last)) bad('правила', 'юридический текст не в самом низу: ' + last.slice(0, 60));
@@ -494,8 +497,8 @@ await run('ui', async () => {
     const gold = await page.evaluate(() => getComputedStyle(document.getElementById('app')).getPropertyValue('--gold').trim());
     await page.click('#btnBonus'); await page.click('#anteToggle'); await page.click('#bonusClose'); await page.waitForTimeout(150);
     const a = await page.evaluate(() => { const b = document.getElementById('btnBonus'), cs = getComputedStyle(b), d = s => getComputedStyle(b.querySelector(s)).display !== 'none';
-      return { bet: document.getElementById('betVal').textContent, badge: document.getElementById('anteBadge').hidden ? null : document.getElementById('anteBadge').textContent, cap: document.getElementById('bonusVal').textContent, tt: getComputedStyle(document.getElementById('bonusVal')).textTransform, c: cs.getPropertyValue('--c').trim(), on: b.classList.contains('on'), off: d('.ico-off'), star: d('.ico-bonus') }; });
-    if (a.bet !== '$1.25' || a.badge !== '×1.25' || a.cap !== 'Deactivate' || a.tt !== 'uppercase' || !a.on || a.c !== gold && a.c !== 'var(--gold)' || !a.off || a.star) bad('анте', 'панель при анте: ' + JSON.stringify(a) + ' gold=' + gold);
+      return { bet: document.getElementById('betVal').textContent, badge: document.getElementById('anteBadge').hidden ? null : document.getElementById('anteBadge').textContent, cap: document.getElementById('bonusVal').textContent, tt: getComputedStyle(document.getElementById('bonusVal')).textTransform, c: cs.getPropertyValue('--img').trim(), on: b.classList.contains('on'), off: d('.ico-off'), star: d('.ico-bonus') }; });
+    if (a.bet !== '$1.25' || a.badge !== '×1.25' || a.cap !== 'Deactivate' || a.tt !== 'uppercase' || !a.on || !a.c.includes('btn_ante_on.webp') || !a.off || a.star) bad('анте', 'панель при анте: ' + JSON.stringify(a));
     if (!(await visible(page, '#anteBadge'))) bad('анте', 'бейдж ×K не виден');
     await shot(page, 'ui_ante_on'); checkGeom('ui анте', await page.evaluate(GEOM), 1280, 720);
     await page.click('#btnBetUp'); if (await text(page, '#betVal') !== '$2.50') bad('анте', 'цена после +: ' + await text(page, '#betVal')); await page.click('#btnBetDown');
@@ -551,12 +554,12 @@ await run('ui', async () => {
     await page.waitForFunction(() => window.__game.state.fs && document.getElementById('bigwin').hidden, null, { timeout: 40000 }).catch(() => bad(tag, 'не начались фриспины'));
     await page.waitForTimeout(300);
     const g = {}; for (const id of ['logo', 'multHud', 'fsBox', 'board', 'btnTurbo', 'btnAuto', 'btnSpin', 'panel', 'btnMenu']) g[id] = await rect(page, '#' + id);
-    const frame = g.board.w / 0.94 * 0.03, top = g.board.y - frame;   // рамка — 3% стороны
+    const frame = g.board.w * 0.1095, top = g.board.y - frame;   // рамка заказчика: окно 88% стороны, планка — 10.95% окна
     if (g.logo.x > w * 0.08 || g.logo.cy > top || g.logo.r > g.multHud.x) bad(tag, 'логотип не слева вверху');
     if (g.multHud.r < w * 0.92 || g.multHud.cy > top || g.multHud.b > top + 1) bad(tag, 'HUD множителя не справа вверху');
-    if (Math.abs(g.fsBox.cx - g.board.cx) > 1 || g.fsBox.y > top || g.fsBox.b < top + frame * 0.5 || g.fsBox.b > g.board.y + g.board.h * 0.08) bad(tag, `табличка фриспинов не на верхней планке рамки: ${g.fsBox.y.toFixed(1)}…${g.fsBox.b.toFixed(1)}, планка ${top.toFixed(1)}…${g.board.y.toFixed(1)}`);
+    if (Math.abs(g.fsBox.cx - g.board.cx) > 1 || g.fsBox.y > top + frame * 0.35 || g.fsBox.b < top + frame * 0.5 || g.fsBox.b > g.board.y + g.board.h * 0.08) bad(tag, `табличка фриспинов не на верхней планке рамки: ${g.fsBox.y.toFixed(1)}…${g.fsBox.b.toFixed(1)}, планка ${top.toFixed(1)}…${g.board.y.toFixed(1)}`);
     if (g.fsBox.x < g.logo.r - 1 && g.fsBox.y < g.logo.b - 1 || g.fsBox.r > g.multHud.x + 1 && g.fsBox.y < g.multHud.b - 1) bad(tag, 'табличка фриспинов наезжает на логотип или HUD');
-    if (g.board.w / 0.94 < w * 0.93 && g.board.y + g.board.h < g.panel.y - 30) bad(tag, `поле не по всей ширине: ${(g.board.w / 0.94).toFixed(0)} из ${w}`);
+    if (g.board.w / 0.88 < w * 0.93 && g.board.y + g.board.h < g.panel.y - 30) bad(tag, `поле не по всей ширине: ${(g.board.w / 0.88).toFixed(0)} из ${w}`);
     if (g.btnAuto.r < w - Math.max(14, w * 0.04) || g.btnAuto.b < h - Math.max(16, h * 0.03) || g.btnTurbo.r > g.btnAuto.x + 1 || Math.abs(g.btnTurbo.b - g.btnAuto.b) > 1) bad(tag, `Turbo и Autoplay не прижаты к правому нижнему краю: [${g.btnAuto.r.toFixed(0)}, ${g.btnAuto.b.toFixed(0)}]`);
     if (g.panel.h > h * 0.3) bad(tag, `панель не компактная: ${g.panel.h.toFixed(0)} px из ${h}`);
     checkGeom(tag + ' (фриспины)', await page.evaluate(GEOM), w, h); await shot(page, `ui_portrait_${w}x${h}_fs`);
@@ -609,19 +612,19 @@ await run('ui', async () => {
       const urls = [];
       const { ctx, page, errs } = await open(w, h, '?lang=en', { context, before: async page => { page.on('request', r => urls.push(r.url().replace(base, '').split('?')[0])); } });
       await page.waitForTimeout(500);
-      const st = await state(page), decor = await page.evaluate(() => document.querySelectorAll('.decor').length), video = await page.evaluate(() => document.querySelectorAll('video:not(#introVideo)').length);
+      const st = await state(page), decor = await page.evaluate(() => document.querySelectorAll('.decor').length), video = await page.evaluate(() => Array.from(document.querySelectorAll('video:not(#introVideo)')).filter(v => v.currentSrc || v.querySelector('source')).length);   // пустые <video> для переходов и живого фона не в счёт
       const bytes = urls.filter(u => u.startsWith('assets/')).reduce((a, u) => a + (fs.existsSync(path.join(BUILD, u)) ? fs.statSync(path.join(BUILD, u)).size : 0), 0);
       checkGeom(`загрузка ${w}x${h}`, await page.evaluate(GEOM), w, h);
       finish(errs, `загрузка ${w}x${h}`); await ctx.close(); return { urls, lite: st.lite, decor, video, bytes };
     };
     const touch = { hasTouch: true, isMobile: true, deviceScaleFactor: 2 };
     const phoneP = await load(390, 844, touch), phoneL = await load(844, 390, touch), tablet = await load(1024, 768, touch), desk = await load(1920, 1080), small = await load(600, 400);
-    const heavy = u => !/\/intro\//.test(u) && /decor_|\.webm$|\.mp4$|bg_land\.webp|bg_port\.webp/.test(u);   // интро студии играет и на телефоне
+    const heavy = u => !/\/intro\//.test(u) && /decor_|\.webm$|\.mp4$|\/bg_land\.webp|\/bg_port\.webp/.test(u);   // интро студии играет и на телефоне
     for (const [name, r, bg] of [['телефон, портрет', phoneP, 'assets/bg/bg_port_s.webp'], ['телефон, ландшафт', phoneL, 'assets/bg/bg_land_s.webp']]) {
       if (!r.lite) bad('телефон', name + ': не распознан как телефон');
       const hv = r.urls.filter(heavy); if (hv.length || r.decor || r.video) bad('телефон', name + ': загружено лишнее — ' + hv.join(', ') + ` (декораций ${r.decor}, видео ${r.video})`);
       if (!r.urls.includes(bg)) bad('телефон', name + ': не загружен облегчённый фон ' + bg);
-      if (r.urls.filter(u => /bg_(land|port)/.test(u)).length !== 1) bad('телефон', name + ': фон должен грузиться только для текущей ориентации — ' + r.urls.filter(u => /bg_/.test(u)).join(', '));
+      if (r.urls.filter(u => /\/bg_(land|port)/.test(u)).length !== 1) bad('телефон', name + ': фон должен грузиться только для текущей ориентации — ' + r.urls.filter(u => /\/bg_/.test(u)).join(', '));
     }
     if (tablet.lite || !tablet.urls.includes('assets/bg/bg_land.webp')) bad('телефон', 'планшет 1024×768 ошибочно считается телефоном');
     if (desk.lite || desk.decor !== 2 || !desk.urls.includes('assets/bg/decor_left.webp') || !desk.urls.includes('assets/bg/bg_land.webp')) bad('телефон', 'на десктопе нет декораций или полного фона');
@@ -667,6 +670,14 @@ await run('demo', async () => {
   await page.click('#btnBonus');   // при включённом анте кнопка сразу его выключает
   if ((await state(page)).ante || await text(page, '#bonusVal') !== 'Bonus') bad('демо', 'кнопка «Deactivate» не выключила анте');
   await page.click('#btnBetDown');
+
+  { // anticipation (турбо): после двух скаттеров барабаны 3–5 крутятся дольше с подсветкой
+    await page.evaluate(s => window.__game.force(s), SEED.tease); await page.click('#btnSpin');
+    await page.waitForTimeout(700); const tz = await page.evaluate(() => window.__game.tease); await shot(page, 'demo_anticipation');
+    if (JSON.stringify(tz) !== JSON.stringify([false, false, true, true, true])) bad('демо', 'anticipation: ' + JSON.stringify(tz));
+    await idle(page); await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__game.busy)) { await page.mouse.click(5, 5); await idle(page); }
+  }
 
   // лимиты автоигры: раунды заданы очередью сидов
   const auto = async (name, seeds, rounds, lossIdx, winIdx, wantRounds) => {
@@ -785,9 +796,9 @@ await run('rgs', async () => {
   if (plays.length !== 5 || plays.map(p => p.mode).join() !== 'BASE,BONUS,BASE,BASE,BASE' || plays.some(p => p.amount !== 2 * U || p.sessionID !== sid)) bad('RGS', 'неверные тела play: ' + JSON.stringify(plays));
   if (r.demo || !r.st.live) bad('RGS', 'игра не в боевом режиме');
   if (await page.evaluate(() => typeof window.SenbazuruMath !== 'undefined')) bad('RGS', 'в боевом режиме загружена демо-математика');
-  // выбранная ставка переживает перезагрузку
+  // без незавершённого раунда после перезагрузки — defaultBetLevel из authenticate, а не прошлый выбор (Engine #242)
   await page.click('#btnBetUp'); await page.reload(); await enter(page);
-  if (await text(page, '#betVal') !== '€5.00') bad('RGS', 'ставка не сохранилась после перезагрузки: ' + await text(page, '#betVal'));
+  if (await text(page, '#betVal') !== '€2.00') bad('RGS', 'после перезагрузки ставка не defaultBetLevel: ' + await text(page, '#betVal'));
   finish(errs, 'RGS'); await ctx.close();
   // 3) незавершённый раунд: показать и закрыть
   {
@@ -834,7 +845,7 @@ await run('flags', async () => {
     const v = { turbo: await visible(page, '#btnTurbo'), auto: await visible(page, '#btnAuto') };
     await page.click('#btnBonus'); v.buy = await visible(page, '#buyBONUS') && await visible(page, '#buySUPER'); await page.keyboard.press('Escape');
     await openInfo(page); const info = await text(page, '#infoSheet'); await page.keyboard.press('Escape');
-    v.rtpLine = info.includes('Theoretical RTP'); v.rtpTable = info.includes('96.00%');   // без флага displayRTP RTP не показывается
+    v.rtpLine = info.includes('Theoretical RTP'); v.rtpTable = info.includes('96.00%');   // таблица RTP по режимам есть всегда, строка RTP — только по флагу
     // пробел запускает раунд; плашку крупного выигрыша можно пропустить
     await page.keyboard.press('Space'); await started(page).catch(() => bad('флаги', 'без флагов пробел не запустил раунд'));
     v.stopEnabled = !(await page.isDisabled('#btnSpin'));
@@ -844,8 +855,8 @@ await run('flags', async () => {
     await page.keyboard.press('Space'); await page.waitForTimeout(400);   // второй — закрыть
     v.skipped = await page.evaluate(() => document.getElementById('bigwin').hidden);
     await idle(page);
-    if (!v.turbo || !v.auto || !v.buy || v.rtpLine || v.rtpTable || !v.stopEnabled || !v.skipped || !v.toTotal) bad('флаги', 'без флагов: ' + JSON.stringify(v));
-    res.none = 'турбо, автоигра, покупка, пробел и пропуск анимаций доступны; RTP в правилах не показан';
+    if (!v.turbo || !v.auto || !v.buy || v.rtpLine || !v.rtpTable || !v.stopEnabled || !v.skipped || !v.toTotal) bad('флаги', 'без флагов: ' + JSON.stringify(v));
+    res.none = 'турбо, автоигра, покупка, пробел и пропуск анимаций доступны; в правилах таблица RTP по режимам без строки displayRTP';
     finish(errs, 'флаги none'); await ctx.close();
   }
   { // disabledTurbo
@@ -919,7 +930,7 @@ await run('flags', async () => {
 });
 
 /* ================= social ================= */
-const RESTRICTED = /\b(bet|bets|betting|buy|buys|buying|bought|bonus|bonuses|cash|credit|credits|currency|deposit|gamble|gambling|money|paid|pay|pays|payout|payouts|paytable|payer|profit|rebet|stake|wager|withdraw)\b/i;
+const RESTRICTED = /\b(bet|bets|betting|buy|buys|buying|bought|bonus|bonuses|cash|credit|credits|currency|deposit|gamble|gambling|money|paid|pay|pays|payout|payouts|paytable|payer|profit|purchase|purchases|purchased|rebet|stake|wager|withdraw)\b/i;
 await run('social', async () => {
   const seen = new Set(); const hits = [];
   const scan = async (page, where) => { for (const s of await page.evaluate(TEXTS)) { seen.add(s); const m = s.match(RESTRICTED); if (m) hits.push(`${where}: «${m[0]}» в «${s.slice(0, 70)}»`); } };
@@ -932,7 +943,7 @@ await run('social', async () => {
   await scan(page, 'главный экран'); await shot(page, 'social_1_main');
   await openInfo(page); await page.waitForTimeout(200); await scan(page, 'правила'); await shot(page, 'social_2_info');
   const info = await text(page, '#infoSheet');
-  for (const need of ['Win table', 'Feature modes', 'play amount', 'Feature purchase: free spins']) if (!info.includes(need) && need !== 'Feature modes') bad('social', 'в правилах нет «' + need + '»');
+  for (const need of ['Symbol wins', 'Feature modes', 'play amount', 'Feature: free spins']) if (!info.includes(need) && need !== 'Feature modes') bad('social', 'в правилах нет «' + need + '»');
   await page.keyboard.press('Escape');
   await page.click('#btnBet'); await page.waitForTimeout(150); await scan(page, 'меню суммы игры');
   if (await text(page, '#betModal h2') !== 'Play amount') bad('social', 'заголовок меню ставок: ' + await text(page, '#betModal h2'));
@@ -940,14 +951,14 @@ await run('social', async () => {
   await page.click('#btnAuto'); await page.waitForTimeout(150); await scan(page, 'автоигра'); await page.keyboard.press('Escape');
   await page.click('#btnBonus'); await page.waitForTimeout(150); await scan(page, 'меню режимов'); await shot(page, 'social_3_modes');
   const menu = { title: await text(page, '#bonusModal h2'), buy: await text(page, '#buyBONUS'), ante: await text(page, '#anteToggle') };
-  if (menu.title !== 'Feature modes' || menu.buy !== 'Purchase' || menu.ante !== 'Activate') bad('social', 'меню режимов: ' + JSON.stringify(menu));
+  if (menu.title !== 'Feature modes' || menu.buy !== 'Get' || menu.ante !== 'Activate') bad('social', 'меню режимов: ' + JSON.stringify(menu));
   await page.click('#anteToggle'); await scan(page, 'меню режимов, анте включён');
   if (await text(page, '#anteToggle') !== 'Deactivate') bad('social', 'кнопка анте: ' + await text(page, '#anteToggle'));
-  if (await text(page, '#modeCards .why') !== 'Feature purchases are unavailable while Ante is on. Deactivate Ante first.') bad('social', 'подпись о закрытых покупках: ' + await text(page, '#modeCards .why'));
+  if (await text(page, '#modeCards .why') !== 'Features are unavailable while Ante is on. Deactivate Ante first.') bad('social', 'подпись о закрытых покупках: ' + await text(page, '#modeCards .why'));
   await page.click('#anteToggle');   // покупки доступны только при выключенном анте
   await page.click('#buySUPER'); await page.waitForTimeout(150); await scan(page, 'подтверждение покупки'); await shot(page, 'social_4_confirm');
   const conf = [await text(page, '#buyQ'), await text(page, '#buyConfirm')];
-  if (conf[0] !== 'Purchase Super free spins?' || conf[1] !== 'Purchase for 300.00' + NB + 'GC') bad('social', 'подтверждение: ' + JSON.stringify(conf));
+  if (conf[0] !== 'Get Super free spins?' || conf[1] !== 'Get for 300.00' + NB + 'GC') bad('social', 'подтверждение: ' + JSON.stringify(conf));
   await page.click('#buyCancel'); await page.click('#anteToggle'); await page.click('#bonusClose'); await scan(page, 'главный экран, анте включён');
   if (await text(page, '#bonusVal') !== 'Deactivate') bad('social', 'главная кнопка при анте: ' + await text(page, '#bonusVal'));
   await page.click('#btnBonus');
@@ -960,7 +971,7 @@ await run('social', async () => {
   await page.waitForFunction(() => window.__game.state.fs, null, { timeout: 20000 }); await scan(page, 'фриспины');
   await idle(page, 120000); await scan(page, 'после бонуса');
   for (const s of titles) { const m = s.match(RESTRICTED); if (m) hits.push(`плашка: «${m[0]}» в «${s}»`); }
-  const win = await text(page, '#winVal'), wantWin = (book('BASE', SEED.bonus).payoutMultiplier / 100).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + NB + 'GC';
+  const win = await text(page, '#winVal'), wantWin = (book('BASE', SEED.bonus).payoutMultiplier / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + NB + 'GC';
   if (win !== wantWin) bad('social', `выигрыш «${win}», ожидался «${wantWin}»`);
   // весь словарь Social Mode и юридический текст
   const dict = await page.evaluate(() => ({ d: window.__game.dict(), legal: window.__game.legal, err: window.__game.t('errIPB') }));
@@ -1041,8 +1052,8 @@ await run('replay', async () => {
   { // Social Mode в повторе: XEC → SC, без запрещённых слов; по умолчанию 1 SC
     const { ctx, page, errs } = await open(390, 844, rurl('&game=g&version=1&mode=SUPER&event=5&amount=5000000&currency=XEC&social=true&lang=ru'));
     const c = await card(page), texts = await page.evaluate(TEXTS);
-    if (c.rBase !== '5.00' + NB + 'SC' || c.rCost !== '1,500.00' + NB + 'SC' || c.rMode !== 'Feature purchase: super free spins') bad('replay social', 'карточка: ' + JSON.stringify(c));
-    if (!/^[\d,]+\.\d{4} SC$/.test(c.rWin)) bad('replay social', 'выигрыш не с 4 знаками: ' + c.rWin);
+    if (c.rBase !== '5.00' + NB + 'SC' || c.rCost !== '1,500.00' + NB + 'SC' || c.rMode !== 'Feature: super free spins') bad('replay social', 'карточка: ' + JSON.stringify(c));
+    if (!/^[\d,]+\.\d{2,4} SC$/.test(c.rWin)) bad('replay social', 'выигрыш не с 4 знаками: ' + c.rWin);
     for (const s of texts) { const m = s.match(RESTRICTED); if (m) bad('replay social', `«${m[0]}» в «${s.slice(0, 60)}»`); }
     const heads = await page.evaluate(() => Array.from(document.querySelectorAll('#replayCard dt')).map(e => e.textContent));
     if (heads.join('|') !== 'Mode|Base play|Cost multiplier|Total play cost|Win multiplier|Total win') bad('replay social', 'подписи карточки: ' + heads.join('|'));
