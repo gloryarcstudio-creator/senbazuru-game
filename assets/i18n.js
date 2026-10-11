@@ -82,7 +82,9 @@ en: {
   maxText: "The maximum win is {max}× the bet amount: {amount} at the current bet amount.",
   maxText2: "When a round reaches it, the round ends at once: remaining free spins are not played and the win is {max}×.",
   pressStart: "Press to continue",
-  rtpLine: "Theoretical RTP: {rtp}%"
+  rtpLine: "Theoretical RTP: {rtp}%",
+  colMode: "Mode",
+  colPrice: "Price"
 },
 ru: {
   menu: "Меню", info: "Инфо", settings: "Настройки", setMusic: "Музыка", setSfx: "Звуковые эффекты", setSpace: "Пробел запускает вращение",
@@ -161,7 +163,9 @@ ru: {
   maxText: "Максимальный выигрыш — {max}× ставки: {amount} при текущей ставке.",
   maxText2: "Когда раунд его достигает, он сразу заканчивается: оставшиеся фриспины не играются, выигрыш — {max}×.",
   pressStart: "Нажмите, чтобы продолжить",
-  rtpLine: "Теоретический RTP: {rtp}%"
+  rtpLine: "Теоретический RTP: {rtp}%",
+  colMode: "Режим",
+  colPrice: "Цена"
 },
 de: {
   menu: "Menü", info: "Info", settings: "Einstellungen", setMusic: "Musik", setSfx: "Soundeffekte", setSpace: "Leertaste startet eine Drehung",
@@ -240,7 +244,9 @@ de: {
   maxText: "Der Maximalgewinn beträgt das {max}-Fache des Einsatzes: {amount} beim aktuellen Einsatz.",
   maxText2: "Erreicht eine Runde ihn, endet sie sofort: Verbleibende Freispiele werden nicht gespielt, der Gewinn beträgt {max}×.",
   pressStart: "Tippen, um fortzufahren",
-  rtpLine: "Theoretischer RTP: {rtp} %"
+  rtpLine: "Theoretischer RTP: {rtp} %",
+  colMode: "Modus",
+  colPrice: "Preis"
 },
 es: {
   menu: "Menú", info: "Info", settings: "Ajustes", setMusic: "Música", setSfx: "Efectos de sonido", setSpace: "La barra espaciadora inicia un giro",
@@ -319,7 +325,9 @@ es: {
   maxText: "El premio máximo es {max}× la apuesta: {amount} con la apuesta actual.",
   maxText2: "Cuando una ronda lo alcanza, termina al instante: los giros gratis restantes no se juegan y el premio es {max}×.",
   pressStart: "Pulsa para continuar",
-  rtpLine: "RTP teórico: {rtp} %"
+  rtpLine: "RTP teórico: {rtp} %",
+  colMode: "Modo",
+  colPrice: "Precio"
 },
 fr: {
   menu: "Menu", info: "Infos", settings: "Réglages", setMusic: "Musique", setSfx: "Effets sonores", setSpace: "La barre d’espace lance un tour",
@@ -398,7 +406,9 @@ fr: {
   maxText: "Le gain maximum est de {max}× la mise : {amount} avec la mise actuelle.",
   maxText2: "Quand une manche l’atteint, elle se termine aussitôt : les tours gratuits restants ne sont pas joués et le gain est de {max}×.",
   pressStart: "Appuyez pour continuer",
-  rtpLine: "RTP théorique : {rtp} %"
+  rtpLine: "RTP théorique : {rtp} %",
+  colMode: "Mode",
+  colPrice: "Prix"
 },
 pt: {
   menu: "Menu", info: "Info", settings: "Configurações", setMusic: "Música", setSfx: "Efeitos sonoros", setSpace: "A barra de espaço inicia um giro",
@@ -477,7 +487,9 @@ pt: {
   maxText: "O ganho máximo é {max}× a aposta: {amount} com a aposta atual.",
   maxText2: "Quando uma rodada o atinge, ela termina na hora: as rodadas grátis restantes não são jogadas e o ganho é {max}×.",
   pressStart: "Toque para continuar",
-  rtpLine: "RTP teórico: {rtp}%"
+  rtpLine: "RTP teórico: {rtp}%",
+  colMode: "Modo",
+  colPrice: "Preço"
 },
 tr: {
   menu: "Menü", info: "Bilgi", settings: "Ayarlar", setMusic: "Müzik", setSfx: "Ses efektleri", setSpace: "Boşluk tuşu dönüşü başlatır",
@@ -556,7 +568,9 @@ tr: {
   maxText: "Maksimum kazanç bahis tutarının {max} katıdır: geçerli bahis tutarında {amount}.",
   maxText2: "Bir tur buna ulaştığında hemen sona erer: kalan bedava dönüşler oynanmaz ve kazanç {max}× olur.",
   pressStart: "Devam etmek için dokunun",
-  rtpLine: "Teorik RTP: %{rtp}"
+  rtpLine: "Teorik RTP: %{rtp}",
+  colMode: "Mod",
+  colPrice: "Fiyat"
 },
 pl: {
   menu: "Menu", info: "Info", settings: "Ustawienia", setMusic: "Muzyka", setSfx: "Efekty dźwiękowe", setSpace: "Spacja uruchamia spin",
@@ -635,7 +649,9 @@ pl: {
   maxText: "Maksymalna wygrana to {max}× stawki: {amount} przy bieżącej stawce.",
   maxText2: "Gdy runda ją osiągnie, od razu się kończy: pozostałe darmowe spiny nie są rozgrywane, a wygrana wynosi {max}×.",
   pressStart: "Dotknij, aby kontynuować",
-  rtpLine: "Teoretyczny RTP: {rtp}%"
+  rtpLine: "Teoretyczny RTP: {rtp}%",
+  colMode: "Tryb",
+  colPrice: "Cena"
 },
 fi: {
   menu: "Valikko", info: "Tiedot", settings: "Asetukset", setMusic: "Musiikki", setSfx: "Äänitehosteet", setSpace: "Välilyönti käynnistää pyöräytyksen",
@@ -714,7 +730,9 @@ fi: {
   maxText: "Suurin voitto on {max}× panos: {amount} nykyisellä panoksella.",
   maxText2: "Kun kierros saavuttaa sen, kierros päättyy heti: jäljellä olevia ilmaiskierroksia ei pelata ja voitto on {max}×.",
   pressStart: "Jatka napauttamalla",
-  rtpLine: "Teoreettinen RTP: {rtp} %"
+  rtpLine: "Teoreettinen RTP: {rtp} %",
+  colMode: "Tila",
+  colPrice: "Hinta"
 },
 id: {
   menu: "Menu", info: "Info", settings: "Pengaturan", setMusic: "Musik", setSfx: "Efek suara", setSpace: "Tombol spasi memulai putaran",
@@ -793,7 +811,9 @@ id: {
   maxText: "Kemenangan maksimum adalah {max}× taruhan: {amount} pada taruhan saat ini.",
   maxText2: "Saat ronde mencapainya, ronde langsung berakhir: sisa putaran gratis tidak dimainkan dan kemenangannya {max}×.",
   pressStart: "Ketuk untuk melanjutkan",
-  rtpLine: "RTP teoretis: {rtp}%"
+  rtpLine: "RTP teoretis: {rtp}%",
+  colMode: "Mode",
+  colPrice: "Harga"
 },
 vi: {
   menu: "Menu", info: "Thông tin", settings: "Cài đặt", setMusic: "Nhạc", setSfx: "Hiệu ứng âm thanh", setSpace: "Phím cách bắt đầu lượt quay",
@@ -872,7 +892,9 @@ vi: {
   maxText: "Mức thắng tối đa là {max}× mức cược: {amount} với mức cược hiện tại.",
   maxText2: "Khi một ván đạt mức này, ván kết thúc ngay: các vòng miễn phí còn lại không được chơi và tiền thắng là {max}×.",
   pressStart: "Chạm để tiếp tục",
-  rtpLine: "RTP lý thuyết: {rtp}%"
+  rtpLine: "RTP lý thuyết: {rtp}%",
+  colMode: "Chế độ",
+  colPrice: "Giá"
 },
 ja: {
   menu: "メニュー", info: "情報", settings: "設定", setMusic: "音楽", setSfx: "効果音", setSpace: "スペースキーでスピン",
@@ -951,7 +973,9 @@ ja: {
   maxText: "最大配当はベット額の{max}倍です。現在のベット額では{amount}です。",
   maxText2: "ラウンドがこれに達すると、その場で終了します。残りのフリースピンはプレイされず、配当は{max}倍になります。",
   pressStart: "タップして続行",
-  rtpLine: "理論RTP：{rtp}%"
+  rtpLine: "理論RTP：{rtp}%",
+  colMode: "モード",
+  colPrice: "価格"
 },
 ko: {
   menu: "메뉴", info: "정보", settings: "설정", setMusic: "음악", setSfx: "효과음", setSpace: "스페이스 바로 스핀 시작",
@@ -1030,7 +1054,9 @@ ko: {
   maxText: "최대 당첨은 베팅 금액의 {max}배입니다. 현재 베팅 금액으로는 {amount}입니다.",
   maxText2: "라운드가 여기에 도달하면 즉시 끝납니다. 남은 프리 스핀은 진행되지 않으며 당첨금은 {max}배입니다.",
   pressStart: "계속하려면 누르세요",
-  rtpLine: "이론적 RTP: {rtp}%"
+  rtpLine: "이론적 RTP: {rtp}%",
+  colMode: "모드",
+  colPrice: "가격"
 },
 zh: {
   menu: "菜单", info: "信息", settings: "设置", setMusic: "音乐", setSfx: "音效", setSpace: "空格键开始旋转",
@@ -1109,7 +1135,9 @@ zh: {
   maxText: "最高赢取为投注额的 {max} 倍：按当前投注额为 {amount}。",
   maxText2: "一局达到该金额时立即结束：剩余的免费旋转不再进行，赢取为 {max}×。",
   pressStart: "点击继续",
-  rtpLine: "理论 RTP：{rtp}%"
+  rtpLine: "理论 RTP：{rtp}%",
+  colMode: "模式",
+  colPrice: "价格"
 },
 hi: {
   menu: "मेन्यू", info: "जानकारी", settings: "सेटिंग", setMusic: "संगीत", setSfx: "ध्वनि प्रभाव", setSpace: "स्पेस बार से स्पिन शुरू हो",
@@ -1188,7 +1216,9 @@ hi: {
   maxText: "अधिकतम जीत दांव की राशि का {max} गुना है: मौजूदा दांव की राशि पर {amount}।",
   maxText2: "जब कोई राउंड इस तक पहुंचता है, तो वह तुरंत खत्म हो जाता है: बचे हुए फ्री स्पिन नहीं खेले जाते और जीत {max}× होती है।",
   pressStart: "जारी रखने के लिए टैप करें",
-  rtpLine: "सैद्धांतिक RTP: {rtp}%"
+  rtpLine: "सैद्धांतिक RTP: {rtp}%",
+  colMode: "मोड",
+  colPrice: "कीमत"
 },
 ar: {
   menu: "القائمة", info: "معلومات", settings: "الإعدادات", setMusic: "الموسيقى", setSfx: "المؤثرات الصوتية", setSpace: "مفتاح المسافة يبدأ الدورة",
@@ -1267,6 +1297,8 @@ ar: {
   maxText: "أقصى ربح هو {max}× مبلغ الرهان: {amount} بمبلغ الرهان الحالي.",
   maxText2: "عندما تبلغه الجولة تنتهي فورًا: لا تُلعب الدورات المجانية المتبقية ويكون الربح {max}×.",
   pressStart: "اضغط للمتابعة",
-  rtpLine: "العائد النظري للاعب (RTP): {rtp}%"
+  rtpLine: "العائد النظري للاعب (RTP): {rtp}%",
+  colMode: "الوضع",
+  colPrice: "السعر"
 }
 };

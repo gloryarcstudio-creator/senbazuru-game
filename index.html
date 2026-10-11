@@ -279,6 +279,11 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 .itbl{margin:.6em auto 1em;border-collapse:collapse;min-width:min(17em,100%)}
 .itbl th{padding:.3em 1em;font:400 .95em var(--font-display);color:var(--gold);border-bottom:1px solid rgba(241,234,216,.3)}
 .itbl td{padding:.35em 1em;border-bottom:1px solid rgba(241,234,216,.12)}
+.imodes{margin:1em auto .4em;border-collapse:collapse;width:100%;max-width:30em;table-layout:fixed;font-size:.88em}
+.imodes th{padding:.3em .25em;font:400 .9em var(--font-display);color:var(--gold);border-bottom:1px solid rgba(241,234,216,.3);overflow-wrap:anywhere;hyphens:auto}
+.imodes td{padding:.35em .25em;border-bottom:1px solid rgba(241,234,216,.12);text-align:center;overflow-wrap:anywhere}
+.imodes td:first-child{text-align:start}
+.imodes th:first-child,.imodes td:first-child{width:34%}
 .itbl td:last-child{font:400 1.15em var(--font-display)}
 .itbl .sc{display:inline-flex;align-items:center;gap:.35em}
 .itbl .sc img{width:1.7em;height:1.7em}
@@ -706,9 +711,14 @@ function pickLang(raw) {
    Порядок важен: сначала словосочетания, потом одиночные слова. Регистр исходного слова сохраняется. */
 const SOCIAL_CURRENCIES = { XGC: 'GC', XSC: 'SC', XEC: 'SC' };
 const SOCIAL_WORDS = [
-  ['bonus modes', 'feature modes'], ['bet amount', 'play amount'], ['bonus buy', 'feature purchase'],
-  ['paytable', 'win table'], ['payout', 'win'],
-  ['buys', 'purchases'], ['buy', 'purchase'], ['bonus', 'feature'], ['bets', 'plays'], ['bet', 'play']
+  ['bonus modes', 'feature modes'], ['bonus buys', 'features'], ['bonus buy', 'feature'], ['buy bonus', 'get feature'], ['buy feature', 'get feature'],
+  ['total bet', 'total play'], ['bet amount', 'play amount'], ['bet level', 'play level'], ['pay table', 'symbol wins'], ['paytable', 'symbol wins'],
+  ['payouts', 'wins'], ['payout', 'win'], ['purchased', 'instantly triggered'], ['bought', 'instantly triggered'],
+  ['purchases', 'gets'], ['purchase', 'get'], ['buying', 'getting'], ['buys', 'gets'], ['buy', 'get'],
+  ['bonuses', 'features'], ['bonus', 'feature'], ['betting', 'playing'], ['bets', 'plays'], ['bet', 'play'], ['stakes', 'plays'], ['stake', 'play amount'],
+  ['pays', 'wins'], ['paid', 'won'], ['pay', 'win'], ['money', 'coins'], ['cash', 'coins'], ['credits', 'balance'], ['credit', 'balance'],
+  ['currency', 'token'], ['deposit', 'get coins'], ['withdraw', 'redeem'], ['gambling', 'playing'], ['gamble', 'play'],
+  ['wagers', 'plays'], ['wager', 'play'], ['rebet', 'respin']
 ];
 function socialize(text) {
   for (const [from, to] of SOCIAL_WORDS) {
@@ -737,9 +747,10 @@ function t(key, vars) {
 }
 
 /* ================= валюта =================
-   Фиат: знак перед числом, 2 знака. Исключения по таблице Stake — знак после числа.
-   Крипто (любой код вне таблицы): код после числа, до 6 знаков. Выигрыши — до 4 знаков.
-   Social: XGC → GC, XSC и XEC → SC, код после числа; выигрыши ровно с 4 знаками. */
+   Фиат: знак перед числом, знаков после запятой — по Intl (JPY, KRW, IDR… — 0). Исключения по таблице Stake — знак после числа.
+   Крипто (любой код вне таблицы): код после числа, до 6 знаков. Выигрыши — до 4 знаков, только если нужны.
+   Social: XGC → GC, XSC и XEC → SC, код после числа; 2 знака, выигрыши до 4. */
+const fracDigits = cur => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).resolvedOptions().maximumFractionDigits; } catch (e) { return 2; } };
 const FIAT = {
   USD: ['$'], CAD: ['CA$'], EUR: ['€'], GBP: ['£'], JPY: ['¥'], CNY: ['CN¥'], RUB: ['₽'], INR: ['₹'], IDR: ['Rp'], KRW: ['₩'], PHP: ['₱'],
   BRL: ['R$'], MXN: ['MX$'], TRY: ['₺'], PEN: ['S/'], NGN: ['₦'], TWD: ['NT$'], NOK: ['kr'], KWD: ['KD'], JOD: ['JD'], CRC: ['₡'], SGD: ['SG$'],
@@ -750,8 +761,8 @@ function money(apiAmount, kind) {
   const cur = G.currency, v = apiAmount / CONFIG.apiUnit, win = kind === 'win';
   const soc = SOCIAL_CURRENCIES[cur], fiat = FIAT[cur];
   let min = 2, max = 2, sym, after = true;
-  if (soc) { sym = soc; if (win) min = max = 4; }
-  else if (fiat) { sym = fiat[0]; after = !!fiat[1]; if (win) max = 4; }
+  if (soc) { sym = soc; if (win) max = 4; }
+  else if (fiat) { sym = fiat[0]; after = !!fiat[1]; min = max = fracDigits(cur); if (win) max = Math.max(max, 4); }
   else { sym = cur; max = win ? 4 : 6; if (win && v > 0 && v < 0.00005) max = 6; }   // очень маленький выигрыш в крипте не должен выглядеть нулём
   const text = v.toLocaleString('en-US', { minimumFractionDigits: min, maximumFractionDigits: max });
   return after ? text + ' ' + sym : sym + text;
@@ -938,6 +949,7 @@ const Snd = {
     if (last) this.stopLoop('reel_spin_loop');
     if (!this.sfx('reel_stop', { rate: 1 + i * 0.07 })) { this.tone(196 + i * 14, 0.11, 0.2, 'sine'); this.rustle(0.07, 0.16, 2600, 1200); }
   },
+  tease() { this.rustle(0.9, 0.16, 500, 3800); this.tone(523, 0.9, 0.06, 'sine'); this.tone(784, 0.9, 0.05, 'sine', 0.15); },
   scatter(n) { if (!this.sfx('scatter_land_' + Math.min(3, n))) this.tone(880 + n * 120, 0.3, 0.14, 'triangle'); },
   wild(mult, sticky) {
     if (!this.sfx(sticky ? 'wild_sticky' : 'wild_land')) this.tone(sticky ? 880 : 740, 0.3, 0.14, 'triangle');
@@ -990,7 +1002,7 @@ async function loadAssets(onProgress) {
 const app = $('app'), boardEl = $('board'), cv = $('reels'), ctx = cv.getContext('2d');
 const R = { cell: 0, inner: 0, dpr: 1, reels: [], dirty: true, landed: null, mults: new Map(), sticky: new Map(), pop: new Map() };
 const BUF = 64, SYM_SCALE = 1.1;
-const SPEED = () => G.turbo ? { v: 42, wind: 0.07, stagger: 0.02, gap: 0.05, min: 0.2, ease: 1.5 } : { v: 27, wind: 0.14, stagger: 0.07, gap: 0.2, min: 0.75, ease: 2.2 };
+const SPEED = () => G.turbo ? { v: 42, wind: 0.07, stagger: 0.02, gap: 0.05, min: 0.2, ease: 1.5, tease: 0.45 } : { v: 27, wind: 0.14, stagger: 0.07, gap: 0.2, min: 0.75, ease: 2.2, tease: 1.1 };
 // символы, мелькающие при вращении, — только картинка, на результат не влияют
 const FILLER = ['L1', 'L1', 'L1', 'L2', 'L2', 'L2', 'L3', 'L3', 'L4', 'L4', 'H4', 'H4', 'H3', 'H2', 'H1'];
 const randSym = i => { const u = Math.random(); return u < 0.03 ? 'S' : (u < 0.1 && i > 0 && i < CONFIG.reels - 1 ? 'W' : FILLER[(Math.random() * FILLER.length) | 0]); };
@@ -1006,13 +1018,20 @@ const backOut = x => { const c = 1.1, y = x - 1; return 1 + (c + 1) * y * y * y 
 
 function startReels() {
   const t = now(), S = SPEED();
-  R.reels.forEach((r, i) => { r.state = 'wait'; r.startAt = t + i * S.stagger; r.stopAt = Infinity; r.final = null; r.v = 0; });
+  R.reels.forEach((r, i) => { r.state = 'wait'; r.startAt = t + i * S.stagger; r.stopAt = Infinity; r.final = null; r.v = 0; r.tease = false; });
   R.mults = new Map(); R.dirty = true; G.slam = false;
 }
 function stopReels(board, mults) {
   const t = now(), S = SPEED();
   R.mults = mults || new Map();
-  R.reels.forEach((r, i) => { r.final = board[i]; r.stopAt = G.slam ? 0 : t + i * S.gap; });
+  /* anticipation: после двух скаттеров на уже остановленных барабанах следующие крутятся дольше, с подсветкой и звуком */
+  let seen = 0, extra = 0;
+  R.reels.forEach((r, i) => {
+    r.tease = !G.slam && seen >= CONFIG.retrigger.scatters - 1;
+    if (r.tease) extra += S.tease;
+    r.final = board[i]; r.stopAt = G.slam ? 0 : t + i * S.gap + extra;
+    seen += board[i].filter(x => x === 'S').length;
+  });
   return new Promise(res => { R.landed = res; });
 }
 /* звук остановки барабана: скаттер (1-й, 2-й, 3-й…) и вайлд с множителем в финальной колонке */
@@ -1043,7 +1062,7 @@ function updateReels(dt, t) {
       if (r.state === 'land' && r.pos >= r.T - S.ease) { r.state = 'ease'; r.t = 0; r.p0 = r.pos; r.dist = r.T - r.pos; r.dur = Math.max(0.12, r.dist * 4.1 / r.v); }
     } else if (r.state === 'ease') {
       r.t += dt; const x = Math.min(1, r.t / r.dur); r.pos = r.p0 + r.dist * backOut(x); r.v = 0;
-      if (x >= 1) { r.pos = r.T; r.state = 'idle'; Snd.stop(r.i, R.reels.every(q => q === r || q.state === 'idle')); landedSound(r); }
+      if (x >= 1) { r.pos = r.T; r.state = 'idle'; Snd.stop(r.i, R.reels.every(q => q === r || q.state === 'idle')); landedSound(r); const nx = R.reels[r.i + 1]; if (nx && nx.tease && nx.state !== 'idle') Snd.tease(); }
     }
   }
   if (moving) R.dirty = true;
@@ -1122,6 +1141,11 @@ function drawBoard(t) {
       ctx.strokeStyle = '#d8402f'; ctx.lineWidth = cell * 0.03; ctx.strokeRect(x + m, y + m, cell - 2 * m, cell - 2 * m);
       ctx.fillStyle = '#e9b63c'; ctx.beginPath(); ctx.moveTo(x + cell - m - f, y + m); ctx.lineTo(x + cell - m, y + m); ctx.lineTo(x + cell - m, y + m + f); ctx.fill();
     }
+  }
+  for (const r of R.reels) if (r.tease && r.state !== 'idle' && r.state !== 'wait') {   // anticipation: золотая колонна
+    const p = 0.5 + 0.5 * Math.sin(t * 9), m = cell * 0.03;
+    ctx.fillStyle = 'rgba(233,182,60,' + (0.14 + 0.12 * p) + ')'; ctx.fillRect(r.i * cell + m, m, cell - 2 * m, inner - 2 * m);
+    ctx.strokeStyle = 'rgba(216,64,47,' + (0.55 + 0.35 * p) + ')'; ctx.lineWidth = cell * 0.035; ctx.strokeRect(r.i * cell + m, m, cell - 2 * m, inner - 2 * m);
   }
   const front = [];
   for (const r of R.reels) {
@@ -1493,7 +1517,8 @@ function toggleMenu(open) {
 }
 
 /* Экран Info. Разделы: 1 вступление, 2 особые символы, 3 схема линий, 4 таблица выплат, 5 вайлды, 6 фриспины (триггер и ретриггер),
-   7 бонус-режимы и цены, 8 максимальный выигрыш, 9 RTP (флаг displayRTP), 10 юридический текст.
+   7 бонус-режимы и цены, 8 максимальный выигрыш и таблица «режим · цена · RTP · макс. выигрыш» (всегда),
+   9 строка RTP (флаг displayRTP), 10 юридический текст.
    Все числа берутся из CONFIG и PAYTABLE (сверены с движком), в переводах — только подстановки. */
 function buildInfo() {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1574,7 +1599,14 @@ function buildInfo() {
   h += sec(T('modesTitle'), '<div class="icards">' + modes + '</div>' + (buys ? P('buyLocked') + P('buyNote') : ''));
 
   // 8) максимальный выигрыш
-  h += sec(T('factMax'), '<div class="imax">' + vars.max + '×</div>' + P('maxText') + P('maxText2'));
+  let mt = '<table class="imodes"><tr><th>' + T('colMode') + '</th><th>' + T('colPrice') + '</th><th>RTP</th><th>' + T('factMax') + '</th></tr>';
+  for (const m of Object.keys(CONFIG.modes)) {
+    if (!buys && (m === 'BONUS' || m === 'SUPER')) continue;
+    const md = CONFIG.modes[m], cell = v => '<td>' + (lang === 'ar' ? '\u2066' + v + '\u2069' : v) + '</td>';
+    mt += '<tr><td>' + esc(modeName(m)) + '</td>' + cell('×' + md.cost) + cell(md.rtp.toFixed(2) + '%') + cell(vars.max.replace(/[\u2066\u2069]/g, '') + '×') + '</tr>';
+  }
+  mt += '</table>';
+  h += sec(T('factMax'), '<div class="imax">' + vars.max + '×</div>' + P('maxText') + P('maxText2') + mt);
 
   // 9) RTP — только по флагу юрисдикции
   if (J.displayRTP) h += '<p class="irtp">' + T('rtpLine') + '</p>';
@@ -2078,6 +2110,7 @@ window.__game = {
   get sndLog() { return { log: Snd.log.slice(), music: Snd.curName, loaded: Object.keys(Snd.buf).filter(k => Snd.buf[k]).length, musicLoaded: Object.keys(Snd.music).filter(k => Snd.music[k]).length, bigwin: !!Snd.bigwinSrc }; }, sndClear() { Snd.log.length = 0; },
   get state() { return { mode: app.dataset.mode, balance: G.balance, bet: G.bet, betLevels: G.betLevels.slice(), win: G.lastWin, auto: G.auto, live: G.live, build: BUILD, ante: G.ante, fs: !!G.fs, sticky: R.sticky.size,
     lang, social: G.social, currency: G.currency, jur: Object.assign({}, G.jur), replay: !!G.replay, turbo: G.turbo, lite: LITE, sound: G.sound, space: G.space, log: G.log.slice() }; },
+  get tease() { return R.reels.map(r => !!r.tease); },
   force(seed) { DEMO.forced = seed >>> 0; }, queue(seeds) { DEMO.queue = seeds.map(s => s >>> 0); }, spin, config: CONFIG, paytable: PAYTABLE,
   t, money, readWins: ev => readWins(ev, false).map(w => ({ money: w.money, noLabel: w.noLabel, cells: w.cells.length })), retext: () => { applyTexts(); updateButtons(); }, dict: () => Object.assign({}, I18N.en, DICT), legal: LEGAL
 };

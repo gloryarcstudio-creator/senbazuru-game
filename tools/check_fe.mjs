@@ -29,7 +29,7 @@ const BUILD = path.resolve(arg('build', path.join(ROOT, 'build')));
 const SHOTS = path.resolve(arg('shots', path.join(ROOT, 'shots')));
 const ALL = ['sizes', 'ui', 'demo', 'rgs', 'currencies', 'flags', 'social', 'replay', 'i18n'];
 const ONLY = arg('only') ? arg('only').split(',') : ALL;
-const SIZES = [[1920, 1080], [1280, 720], [1024, 768], [844, 390], [600, 900], [390, 844], [375, 667], [400, 225]];
+const SIZES = [[1920, 1080], [1280, 592], [1024, 576], [800, 450], [400, 225], [390, 844], [320, 568], [430, 932], [812, 375]];   // этап 8 инструкций проекта + 1920×1080
 const LANGS = ['en', 'ru', 'de', 'es', 'fr', 'pt', 'tr', 'pl', 'fi', 'id', 'vi', 'ja', 'ko', 'zh', 'hi', 'ar'];
 const MIME = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.mp3': 'audio/mpeg', '.js': 'text/javascript', '.webm': 'video/webm', '.mp4': 'video/mp4' };
 const M = require(path.join(BUILD, 'assets/js/math.js'));
@@ -50,7 +50,8 @@ const SEED = {
   bonus: findSeed('BASE', b => has(b, 'freeSpinTrigger') && !has(b, 'retrigger') && b.payoutMultiplier >= 3000 && b.payoutMultiplier <= 40000),
   retrig: findSeed('BONUS', b => has(b, 'retrigger') && b.payoutMultiplier > 0),
   sup: findSeed('SUPER', b => b.payoutMultiplier >= 5000),
-  cap: findSeed('SUPER', b => has(b, 'wincap'))
+  cap: findSeed('SUPER', b => has(b, 'wincap')),
+  tease: findSeed('BASE', b => !has(b, 'freeSpinTrigger') && b.payoutMultiplier < 1000 && [0, 1].every(i => b.events[0].board[i].some(c => c.name === 'S')))   // скаттеры на 1-м и 2-м барабанах → anticipation
 };
 const book = (mode, seed) => M.book(mode, seed);
 const simpleRound = hundredths => [   // раунд из четырёх событий с заданным выигрышем
@@ -58,11 +59,12 @@ const simpleRound = hundredths => [   // раунд из четырёх собы
   { index: 1, type: 'winInfo', totalWin: hundredths, wins: [{ symbol: 'H1', kind: 3, win: hundredths, positions: [{ reel: 0, row: 4 }, { reel: 2, row: 0 }, { reel: 4, row: 2 }], meta: { lineIndex: 0, multiplier: 1, winWithoutMult: hundredths } }] },
   { index: 2, type: 'setTotalWin', amount: hundredths }, { index: 3, type: 'finalWin', amount: hundredths }];
 
-/* 15 валют: баланс, ставка и множитель выплаты от «сервера» и то, что должно быть на экране */
+/* 16 валют: баланс, ставка и множитель выплаты от «сервера» и то, что должно быть на экране */
 const CUR = {
   USD: { bal: 1234.5, bet: 2, mult: 7.77, show: ['$1,234.50', '$2.00', '$15.54'] },
   EUR: { bal: 1234.5, bet: 2, mult: 7.77, show: ['€1,234.50', '€2.00', '€15.54'] },
-  JPY: { bal: 150000, bet: 100, mult: 7.77, show: ['¥150,000.00', '¥100.00', '¥777.00'] },
+  JPY: { bal: 150000, bet: 100, mult: 7.77, show: ['¥150,000', '¥100', '¥777'] },
+  MXN: { bal: 1234.5, bet: 2, mult: 7.77, show: ['MX$1,234.50', 'MX$2.00', 'MX$15.54'] },
   BRL: { bal: 1234.5, bet: 2, mult: 7.77, show: ['R$1,234.50', 'R$2.00', 'R$15.54'] },
   INR: { bal: 1234.5, bet: 2, mult: 7.77, show: ['₹1,234.50', '₹2.00', '₹15.54'] },
   TRY: { bal: 1234.5, bet: 2, mult: 7.77, show: ['₺1,234.50', '₺2.00', '₺15.54'] },
@@ -72,9 +74,9 @@ const CUR = {
   LTC: { bal: 100, bet: 0.1, mult: 7.77, show: ['100.00' + NB + 'LTC', '0.10' + NB + 'LTC', '0.777' + NB + 'LTC'] },
   DOGE: { bal: 50000, bet: 10, mult: 7.77, show: ['50,000.00' + NB + 'DOGE', '10.00' + NB + 'DOGE', '77.70' + NB + 'DOGE'] },
   USDT: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'USDT', '2.00' + NB + 'USDT', '15.54' + NB + 'USDT'] },
-  XGC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'GC', '2.00' + NB + 'GC', '15.5400' + NB + 'GC'] },
-  XSC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.5400' + NB + 'SC'] },
-  XEC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.5400' + NB + 'SC'] }
+  XGC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'GC', '2.00' + NB + 'GC', '15.54' + NB + 'GC'] },
+  XSC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.54' + NB + 'SC'] },
+  XEC: { bal: 1234.5, bet: 2, mult: 7.77, show: ['1,234.50' + NB + 'SC', '2.00' + NB + 'SC', '15.54' + NB + 'SC'] }
 };
 const FLAGS = { disabledTurbo: true, disabledAutoplay: true, disabledBuyFeature: true, disabledSpacebar: true, disabledSlamstop: true, displayRTP: true, minimumRoundDuration: 4000, socialCasino: true };
 const NO_FLAGS = { socialCasino: false, disabledFullscreen: false, disabledTurbo: false, disabledSuperTurbo: false, disabledAutoplay: false, disabledSlamstop: false, disabledSpacebar: false, disabledBuyFeature: false, displayNetPosition: false, displayRTP: false, displaySessionTimer: false, minimumRoundDuration: 0 };
@@ -668,6 +670,14 @@ await run('demo', async () => {
   if ((await state(page)).ante || await text(page, '#bonusVal') !== 'Bonus') bad('демо', 'кнопка «Deactivate» не выключила анте');
   await page.click('#btnBetDown');
 
+  { // anticipation (турбо): после двух скаттеров барабаны 3–5 крутятся дольше с подсветкой
+    await page.evaluate(s => window.__game.force(s), SEED.tease); await page.click('#btnSpin');
+    await page.waitForTimeout(700); const tz = await page.evaluate(() => window.__game.tease); await shot(page, 'demo_anticipation');
+    if (JSON.stringify(tz) !== JSON.stringify([false, false, true, true, true])) bad('демо', 'anticipation: ' + JSON.stringify(tz));
+    await idle(page); await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__game.busy)) { await page.mouse.click(5, 5); await idle(page); }
+  }
+
   // лимиты автоигры: раунды заданы очередью сидов
   const auto = async (name, seeds, rounds, lossIdx, winIdx, wantRounds) => {
     const n0 = (await state(page)).log.length;
@@ -834,7 +844,7 @@ await run('flags', async () => {
     const v = { turbo: await visible(page, '#btnTurbo'), auto: await visible(page, '#btnAuto') };
     await page.click('#btnBonus'); v.buy = await visible(page, '#buyBONUS') && await visible(page, '#buySUPER'); await page.keyboard.press('Escape');
     await openInfo(page); const info = await text(page, '#infoSheet'); await page.keyboard.press('Escape');
-    v.rtpLine = info.includes('Theoretical RTP'); v.rtpTable = info.includes('96.00%');   // без флага displayRTP RTP не показывается
+    v.rtpLine = info.includes('Theoretical RTP'); v.rtpTable = info.includes('96.00%');   // таблица RTP по режимам есть всегда, строка RTP — только по флагу
     // пробел запускает раунд; плашку крупного выигрыша можно пропустить
     await page.keyboard.press('Space'); await started(page).catch(() => bad('флаги', 'без флагов пробел не запустил раунд'));
     v.stopEnabled = !(await page.isDisabled('#btnSpin'));
@@ -844,8 +854,8 @@ await run('flags', async () => {
     await page.keyboard.press('Space'); await page.waitForTimeout(400);   // второй — закрыть
     v.skipped = await page.evaluate(() => document.getElementById('bigwin').hidden);
     await idle(page);
-    if (!v.turbo || !v.auto || !v.buy || v.rtpLine || v.rtpTable || !v.stopEnabled || !v.skipped || !v.toTotal) bad('флаги', 'без флагов: ' + JSON.stringify(v));
-    res.none = 'турбо, автоигра, покупка, пробел и пропуск анимаций доступны; RTP в правилах не показан';
+    if (!v.turbo || !v.auto || !v.buy || v.rtpLine || !v.rtpTable || !v.stopEnabled || !v.skipped || !v.toTotal) bad('флаги', 'без флагов: ' + JSON.stringify(v));
+    res.none = 'турбо, автоигра, покупка, пробел и пропуск анимаций доступны; в правилах таблица RTP по режимам без строки displayRTP';
     finish(errs, 'флаги none'); await ctx.close();
   }
   { // disabledTurbo
@@ -919,7 +929,7 @@ await run('flags', async () => {
 });
 
 /* ================= social ================= */
-const RESTRICTED = /\b(bet|bets|betting|buy|buys|buying|bought|bonus|bonuses|cash|credit|credits|currency|deposit|gamble|gambling|money|paid|pay|pays|payout|payouts|paytable|payer|profit|rebet|stake|wager|withdraw)\b/i;
+const RESTRICTED = /\b(bet|bets|betting|buy|buys|buying|bought|bonus|bonuses|cash|credit|credits|currency|deposit|gamble|gambling|money|paid|pay|pays|payout|payouts|paytable|payer|profit|purchase|purchases|purchased|rebet|stake|wager|withdraw)\b/i;
 await run('social', async () => {
   const seen = new Set(); const hits = [];
   const scan = async (page, where) => { for (const s of await page.evaluate(TEXTS)) { seen.add(s); const m = s.match(RESTRICTED); if (m) hits.push(`${where}: «${m[0]}» в «${s.slice(0, 70)}»`); } };
@@ -932,7 +942,7 @@ await run('social', async () => {
   await scan(page, 'главный экран'); await shot(page, 'social_1_main');
   await openInfo(page); await page.waitForTimeout(200); await scan(page, 'правила'); await shot(page, 'social_2_info');
   const info = await text(page, '#infoSheet');
-  for (const need of ['Win table', 'Feature modes', 'play amount', 'Feature purchase: free spins']) if (!info.includes(need) && need !== 'Feature modes') bad('social', 'в правилах нет «' + need + '»');
+  for (const need of ['Symbol wins', 'Feature modes', 'play amount', 'Feature: free spins']) if (!info.includes(need) && need !== 'Feature modes') bad('social', 'в правилах нет «' + need + '»');
   await page.keyboard.press('Escape');
   await page.click('#btnBet'); await page.waitForTimeout(150); await scan(page, 'меню суммы игры');
   if (await text(page, '#betModal h2') !== 'Play amount') bad('social', 'заголовок меню ставок: ' + await text(page, '#betModal h2'));
@@ -940,14 +950,14 @@ await run('social', async () => {
   await page.click('#btnAuto'); await page.waitForTimeout(150); await scan(page, 'автоигра'); await page.keyboard.press('Escape');
   await page.click('#btnBonus'); await page.waitForTimeout(150); await scan(page, 'меню режимов'); await shot(page, 'social_3_modes');
   const menu = { title: await text(page, '#bonusModal h2'), buy: await text(page, '#buyBONUS'), ante: await text(page, '#anteToggle') };
-  if (menu.title !== 'Feature modes' || menu.buy !== 'Purchase' || menu.ante !== 'Activate') bad('social', 'меню режимов: ' + JSON.stringify(menu));
+  if (menu.title !== 'Feature modes' || menu.buy !== 'Get' || menu.ante !== 'Activate') bad('social', 'меню режимов: ' + JSON.stringify(menu));
   await page.click('#anteToggle'); await scan(page, 'меню режимов, анте включён');
   if (await text(page, '#anteToggle') !== 'Deactivate') bad('social', 'кнопка анте: ' + await text(page, '#anteToggle'));
-  if (await text(page, '#modeCards .why') !== 'Feature purchases are unavailable while Ante is on. Deactivate Ante first.') bad('social', 'подпись о закрытых покупках: ' + await text(page, '#modeCards .why'));
+  if (await text(page, '#modeCards .why') !== 'Features are unavailable while Ante is on. Deactivate Ante first.') bad('social', 'подпись о закрытых покупках: ' + await text(page, '#modeCards .why'));
   await page.click('#anteToggle');   // покупки доступны только при выключенном анте
   await page.click('#buySUPER'); await page.waitForTimeout(150); await scan(page, 'подтверждение покупки'); await shot(page, 'social_4_confirm');
   const conf = [await text(page, '#buyQ'), await text(page, '#buyConfirm')];
-  if (conf[0] !== 'Purchase Super free spins?' || conf[1] !== 'Purchase for 300.00' + NB + 'GC') bad('social', 'подтверждение: ' + JSON.stringify(conf));
+  if (conf[0] !== 'Get Super free spins?' || conf[1] !== 'Get for 300.00' + NB + 'GC') bad('social', 'подтверждение: ' + JSON.stringify(conf));
   await page.click('#buyCancel'); await page.click('#anteToggle'); await page.click('#bonusClose'); await scan(page, 'главный экран, анте включён');
   if (await text(page, '#bonusVal') !== 'Deactivate') bad('social', 'главная кнопка при анте: ' + await text(page, '#bonusVal'));
   await page.click('#btnBonus');
@@ -960,7 +970,7 @@ await run('social', async () => {
   await page.waitForFunction(() => window.__game.state.fs, null, { timeout: 20000 }); await scan(page, 'фриспины');
   await idle(page, 120000); await scan(page, 'после бонуса');
   for (const s of titles) { const m = s.match(RESTRICTED); if (m) hits.push(`плашка: «${m[0]}» в «${s}»`); }
-  const win = await text(page, '#winVal'), wantWin = (book('BASE', SEED.bonus).payoutMultiplier / 100).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + NB + 'GC';
+  const win = await text(page, '#winVal'), wantWin = (book('BASE', SEED.bonus).payoutMultiplier / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + NB + 'GC';
   if (win !== wantWin) bad('social', `выигрыш «${win}», ожидался «${wantWin}»`);
   // весь словарь Social Mode и юридический текст
   const dict = await page.evaluate(() => ({ d: window.__game.dict(), legal: window.__game.legal, err: window.__game.t('errIPB') }));
@@ -1041,8 +1051,8 @@ await run('replay', async () => {
   { // Social Mode в повторе: XEC → SC, без запрещённых слов; по умолчанию 1 SC
     const { ctx, page, errs } = await open(390, 844, rurl('&game=g&version=1&mode=SUPER&event=5&amount=5000000&currency=XEC&social=true&lang=ru'));
     const c = await card(page), texts = await page.evaluate(TEXTS);
-    if (c.rBase !== '5.00' + NB + 'SC' || c.rCost !== '1,500.00' + NB + 'SC' || c.rMode !== 'Feature purchase: super free spins') bad('replay social', 'карточка: ' + JSON.stringify(c));
-    if (!/^[\d,]+\.\d{4} SC$/.test(c.rWin)) bad('replay social', 'выигрыш не с 4 знаками: ' + c.rWin);
+    if (c.rBase !== '5.00' + NB + 'SC' || c.rCost !== '1,500.00' + NB + 'SC' || c.rMode !== 'Feature: super free spins') bad('replay social', 'карточка: ' + JSON.stringify(c));
+    if (!/^[\d,]+\.\d{2,4} SC$/.test(c.rWin)) bad('replay social', 'выигрыш не с 4 знаками: ' + c.rWin);
     for (const s of texts) { const m = s.match(RESTRICTED); if (m) bad('replay social', `«${m[0]}» в «${s.slice(0, 60)}»`); }
     const heads = await page.evaluate(() => Array.from(document.querySelectorAll('#replayCard dt')).map(e => e.textContent));
     if (heads.join('|') !== 'Mode|Base play|Cost multiplier|Total play cost|Win multiplier|Total win') bad('replay social', 'подписи карточки: ' + heads.join('|'));
