@@ -261,7 +261,7 @@ async function open(w, h, query = '', opts = {}) {
   const page = await ctx.newPage(); const errs = [];
   page.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !(opts.allow && opts.allow.test(m.text()))) errs.push(`[${m.type()}] ${m.text()}`); });
   page.on('pageerror', e => errs.push('[pageerror] ' + e.message));
-  page.on('requestfailed', r => errs.push('[requestfailed] ' + r.url()));
+  page.on('requestfailed', r => { const f = r.failure() ? r.failure().errorText : ''; if (f === 'net::ERR_ABORTED' && /\.(webm|mp4)\b/.test(r.url())) return; errs.push('[requestfailed] ' + r.url() + ' ' + f); });   // прерванная загрузка видео при закрытии страницы — не ошибка
   page.on('response', r => { if (r.status() >= 400 && !(opts.allow && opts.allow.test(r.url()))) errs.push(`[${r.status()}] ${r.url()}`); });
   if (opts.before) await opts.before(page);
   await page.goto(base + query + (query.includes('?') ? '&' : '?') + 'intro=0');   // интро студии проверяется отдельно (раздел ui)
@@ -359,7 +359,7 @@ await run('sizes', async () => {
 
 /* ================= ui ================= */
 await run('ui', async () => {
-  const css = (page, sel, prop) => page.evaluate(([s, p]) => getComputedStyle(document.querySelector(s))[p], [sel, prop]);
+  const css = (page, sel, prop) => page.evaluate(([s, p]) => { const cs = getComputedStyle(document.querySelector(s)); return p.startsWith('--') ? cs.getPropertyValue(p).trim() : cs[p]; }, [sel, prop]);
   // 1) верхняя строка «Balance | Win | Bet» и нижняя строка кнопок; на десктопе центр Win = центр спина
   const centres = [];
   for (const [w, h] of [[1920, 1080], [1280, 720], [1024, 768], [1600, 900], [1366, 768]]) {
@@ -372,7 +372,7 @@ await run('ui', async () => {
     if (!(g.balanceBox.r <= g.winBox.x && g.winBox.r <= g.betGroup.x) || Math.abs(g.balanceBox.cy - g.winBox.cy) > 1 || Math.abs(g.betBox.cy - g.winBox.cy) > 1) bad(tag, 'верхняя строка не «Balance | Win | Bet»');
     if (!(g.btnBetDown.r <= g.betBox.x + 1 && g.btnBetUp.x >= g.betBox.r - 1)) bad(tag, 'кнопки − и + не по сторонам от Bet');
     if (!(g.btnMenu.r <= g.btnBonus.x && g.btnBonus.r < g.btnSpin.x && g.btnSpin.r < g.btnTurbo.x && g.btnTurbo.r <= g.btnAuto.x)) bad(tag, 'нижняя строка не «Menu Bonus | Spin | Turbo Autoplay»');
-    for (const id of ['btnMenu', 'btnBonus']) if (Math.abs(g[id].w - g[id].h) > 0.5 || !(parseFloat(await css(page, '#' + id, 'borderTopLeftRadius')) >= 10)) bad(tag, id + ' не квадратная со скруглением');
+    for (const [id, img] of [['btnMenu', 'btn_menu'], ['btnBonus', 'btn_bonus']]) if (Math.abs(g[id].w - g[id].h) > 0.5 || !(await css(page, '#' + id, '--img')).includes(img + '.webp')) bad(tag, id + ' не квадратная картинка ' + img);
     if (g.btnSpin.w < g.btnMenu.w * 1.25) bad(tag, 'спин не крупнее остальных кнопок');
     const green = await page.evaluate(() => getComputedStyle(document.getElementById('btnSpin')).getPropertyValue('--c').trim() + '|' + getComputedStyle(document.getElementById('app')).getPropertyValue('--spin').trim());
     if (!/2fb364/i.test(green)) bad(tag, 'спин не зелёный: ' + green);
@@ -396,7 +396,7 @@ await run('ui', async () => {
     const snd = () => page.evaluate(() => { const b = document.getElementById('btnSound'), cs = getComputedStyle(b), d = s => getComputedStyle(b.querySelector(s)).display !== 'none';
       return { off: b.classList.contains('off'), pressed: b.getAttribute('aria-pressed'), on: d('.ico-on'), cross: d('.ico-off'), color: cs.color, shadow: cs.boxShadow, filter: cs.filter, bg: cs.getPropertyValue('--c').trim(), sound: window.__game.state.sound }; });
     let s1 = await snd();
-    if (s1.off || !s1.on || s1.cross || s1.color !== 'rgb(255, 255, 255)' || !/59, 224, 127/.test(s1.shadow) || !s1.sound) bad('звук', 'включённый звук: ' + JSON.stringify(s1));
+    if (s1.off || !s1.on || s1.cross || s1.color !== 'rgb(255, 255, 255)' || !/59, 224, 127/.test(s1.shadow + s1.filter) || !s1.sound) bad('звук', 'включённый звук: ' + JSON.stringify(s1));
     await page.click('#btnSound'); await page.waitForTimeout(200); await shot(page, 'ui_menu_sound_off');
     let s2 = await snd();
     if (!s2.off || s2.on || !s2.cross || s2.color === 'rgb(255, 255, 255)' || /59, 224, 127/.test(s2.shadow) || !/brightness/.test(s2.filter) || s2.sound || s2.pressed !== 'false') bad('звук', 'выключенный звук: ' + JSON.stringify(s2));
@@ -496,8 +496,8 @@ await run('ui', async () => {
     const gold = await page.evaluate(() => getComputedStyle(document.getElementById('app')).getPropertyValue('--gold').trim());
     await page.click('#btnBonus'); await page.click('#anteToggle'); await page.click('#bonusClose'); await page.waitForTimeout(150);
     const a = await page.evaluate(() => { const b = document.getElementById('btnBonus'), cs = getComputedStyle(b), d = s => getComputedStyle(b.querySelector(s)).display !== 'none';
-      return { bet: document.getElementById('betVal').textContent, badge: document.getElementById('anteBadge').hidden ? null : document.getElementById('anteBadge').textContent, cap: document.getElementById('bonusVal').textContent, tt: getComputedStyle(document.getElementById('bonusVal')).textTransform, c: cs.getPropertyValue('--c').trim(), on: b.classList.contains('on'), off: d('.ico-off'), star: d('.ico-bonus') }; });
-    if (a.bet !== '$1.25' || a.badge !== '×1.25' || a.cap !== 'Deactivate' || a.tt !== 'uppercase' || !a.on || a.c !== gold && a.c !== 'var(--gold)' || !a.off || a.star) bad('анте', 'панель при анте: ' + JSON.stringify(a) + ' gold=' + gold);
+      return { bet: document.getElementById('betVal').textContent, badge: document.getElementById('anteBadge').hidden ? null : document.getElementById('anteBadge').textContent, cap: document.getElementById('bonusVal').textContent, tt: getComputedStyle(document.getElementById('bonusVal')).textTransform, c: cs.getPropertyValue('--img').trim(), on: b.classList.contains('on'), off: d('.ico-off'), star: d('.ico-bonus') }; });
+    if (a.bet !== '$1.25' || a.badge !== '×1.25' || a.cap !== 'Deactivate' || a.tt !== 'uppercase' || !a.on || !a.c.includes('btn_ante_on.webp') || !a.off || a.star) bad('анте', 'панель при анте: ' + JSON.stringify(a));
     if (!(await visible(page, '#anteBadge'))) bad('анте', 'бейдж ×K не виден');
     await shot(page, 'ui_ante_on'); checkGeom('ui анте', await page.evaluate(GEOM), 1280, 720);
     await page.click('#btnBetUp'); if (await text(page, '#betVal') !== '$2.50') bad('анте', 'цена после +: ' + await text(page, '#betVal')); await page.click('#btnBetDown');
@@ -553,12 +553,12 @@ await run('ui', async () => {
     await page.waitForFunction(() => window.__game.state.fs && document.getElementById('bigwin').hidden, null, { timeout: 40000 }).catch(() => bad(tag, 'не начались фриспины'));
     await page.waitForTimeout(300);
     const g = {}; for (const id of ['logo', 'multHud', 'fsBox', 'board', 'btnTurbo', 'btnAuto', 'btnSpin', 'panel', 'btnMenu']) g[id] = await rect(page, '#' + id);
-    const frame = g.board.w / 0.94 * 0.03, top = g.board.y - frame;   // рамка — 3% стороны
+    const frame = g.board.w * 0.1095, top = g.board.y - frame;   // рамка заказчика: окно 88% стороны, планка — 10.95% окна
     if (g.logo.x > w * 0.08 || g.logo.cy > top || g.logo.r > g.multHud.x) bad(tag, 'логотип не слева вверху');
     if (g.multHud.r < w * 0.92 || g.multHud.cy > top || g.multHud.b > top + 1) bad(tag, 'HUD множителя не справа вверху');
     if (Math.abs(g.fsBox.cx - g.board.cx) > 1 || g.fsBox.y > top || g.fsBox.b < top + frame * 0.5 || g.fsBox.b > g.board.y + g.board.h * 0.08) bad(tag, `табличка фриспинов не на верхней планке рамки: ${g.fsBox.y.toFixed(1)}…${g.fsBox.b.toFixed(1)}, планка ${top.toFixed(1)}…${g.board.y.toFixed(1)}`);
     if (g.fsBox.x < g.logo.r - 1 && g.fsBox.y < g.logo.b - 1 || g.fsBox.r > g.multHud.x + 1 && g.fsBox.y < g.multHud.b - 1) bad(tag, 'табличка фриспинов наезжает на логотип или HUD');
-    if (g.board.w / 0.94 < w * 0.93 && g.board.y + g.board.h < g.panel.y - 30) bad(tag, `поле не по всей ширине: ${(g.board.w / 0.94).toFixed(0)} из ${w}`);
+    if (g.board.w / 0.88 < w * 0.93 && g.board.y + g.board.h < g.panel.y - 30) bad(tag, `поле не по всей ширине: ${(g.board.w / 0.88).toFixed(0)} из ${w}`);
     if (g.btnAuto.r < w - Math.max(14, w * 0.04) || g.btnAuto.b < h - Math.max(16, h * 0.03) || g.btnTurbo.r > g.btnAuto.x + 1 || Math.abs(g.btnTurbo.b - g.btnAuto.b) > 1) bad(tag, `Turbo и Autoplay не прижаты к правому нижнему краю: [${g.btnAuto.r.toFixed(0)}, ${g.btnAuto.b.toFixed(0)}]`);
     if (g.panel.h > h * 0.3) bad(tag, `панель не компактная: ${g.panel.h.toFixed(0)} px из ${h}`);
     checkGeom(tag + ' (фриспины)', await page.evaluate(GEOM), w, h); await shot(page, `ui_portrait_${w}x${h}_fs`);

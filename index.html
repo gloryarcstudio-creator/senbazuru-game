@@ -21,7 +21,7 @@
 [hidden]{display:none!important}
 html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);color:var(--paper);
   font-family:var(--font-ui);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-#app{position:relative;width:100%;height:100%;overflow:hidden;font-variant-numeric:tabular-nums}
+#app{position:relative;width:100%;height:100%;overflow:hidden;overflow:clip;font-variant-numeric:tabular-nums}   /* clip: гирлянда за краем не даёт прокрутить app фокусом */
 #bg{position:absolute;inset:0;background:#1a2a5c center/cover no-repeat;transition:filter .8s}
 /* живой фон (десктоп): видео поверх картинки, появляется, когда заиграло */
 #bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s}
@@ -1455,7 +1455,7 @@ function layout() {
     side = Math.min(W - 2 * pad - 4, H - ph - strip - pad);
     bx = (W - side) / 2; by = strip + (H - ph - strip - side) * 0.45;
     const fsH = Math.max(16, side * 0.085), zone = by - fsH * 0.65, hud = clamp(zone * 0.86, 30, 88);
-    put($('logo'), pad * 1.8, zone / 2, Math.min(zone * 0.42, (W - hud - pad * 7) / 10.6), 'l');
+    put($('logo'), pad * 1.8, zone / 2, Math.min(zone * 0.36, (W - hud - pad * 7) / 12.6), 'l');   // картинка логотипа 12.6em в ширину, 2.8em в высоту
     place($('multHud'), W - pad * 1.6 - hud / 2, zone / 2, hud, hud);
     setDecor(false);
   } else {
