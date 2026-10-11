@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="build" content="0">
 <title>Senbazuru 5×5</title>
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <style>
 /* Раскладка: поле 5×5 над нижней панелью. Панель: строка «Баланс | Выигрыш | Ставка», под ней — Menu и Bonus слева,
@@ -1506,7 +1507,7 @@ function showBet() {
 }
 function setBet(idx) {
   G.betIdx = clamp(idx, 0, G.betLevels.length - 1); G.bet = G.betLevels[G.betIdx];
-  store('bet.' + G.currency, String(G.bet)); showBet(); updateButtons();
+  showBet(); updateButtons();
 }
 /* Уровни ставок — из конфига RGS: betLevels в пределах minBet…maxBet и кратные stepBet. */
 function setupBets(cfg, resumeAmount) {
@@ -1523,7 +1524,8 @@ function setupBets(cfg, resumeAmount) {
   if (resumeAmount > 0 && !levels.includes(resumeAmount)) levels.push(resumeAmount);   // ставка незавершённого раунда
   G.betLevels = Array.from(new Set(levels)).sort((a, b) => a - b);
   let idx = -1;
-  for (const want of [resumeAmount, Number(store('bet.' + G.currency)), cfg.defaultBetLevel]) { if (idx < 0 && want) idx = G.betLevels.indexOf(want); }
+  // ставка при запуске: незавершённого раунда, иначе defaultBetLevel из RGS (Engine #187, #242); прошлый выбор игрока не запоминается
+  for (const want of [resumeAmount, cfg.defaultBetLevel]) { if (idx < 0 && want) idx = G.betLevels.indexOf(want); }
   setBet(idx < 0 ? 0 : idx);
 }
 function setFs(i, total) { $('fsVal').textContent = i + ' / ' + total; queueFit(); }

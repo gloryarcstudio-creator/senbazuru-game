@@ -796,9 +796,9 @@ await run('rgs', async () => {
   if (plays.length !== 5 || plays.map(p => p.mode).join() !== 'BASE,BONUS,BASE,BASE,BASE' || plays.some(p => p.amount !== 2 * U || p.sessionID !== sid)) bad('RGS', 'неверные тела play: ' + JSON.stringify(plays));
   if (r.demo || !r.st.live) bad('RGS', 'игра не в боевом режиме');
   if (await page.evaluate(() => typeof window.SenbazuruMath !== 'undefined')) bad('RGS', 'в боевом режиме загружена демо-математика');
-  // выбранная ставка переживает перезагрузку
+  // без незавершённого раунда после перезагрузки — defaultBetLevel из authenticate, а не прошлый выбор (Engine #242)
   await page.click('#btnBetUp'); await page.reload(); await enter(page);
-  if (await text(page, '#betVal') !== '€5.00') bad('RGS', 'ставка не сохранилась после перезагрузки: ' + await text(page, '#betVal'));
+  if (await text(page, '#betVal') !== '€2.00') bad('RGS', 'после перезагрузки ставка не defaultBetLevel: ' + await text(page, '#betVal'));
   finish(errs, 'RGS'); await ctx.close();
   // 3) незавершённый раунд: показать и закрыть
   {
