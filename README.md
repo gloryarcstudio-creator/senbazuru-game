@@ -5,10 +5,11 @@
 | Команда | Что делает |
 |---|---|
 | `python3 tools/build_fe.py --bump` | поднимает версию (файл `VERSION`), собирает `build/`, ставит `?v=N` на ассеты и `<meta name="build">` |
-| `tools/pack_fe.sh` | пакует `build/` в `dist/origami_vN_part1.zip` (всё, кроме anim и music) и `part2.zip` (assets/anim + assets/music), проверяет лимит 30 МБ |
+| `tools/pack_fe.sh` | пакует `build/` в `dist/origami_vN_part1.zip` (всё, кроме anim, music и video) и `part2.zip` (assets/anim + assets/music + assets/video), проверяет лимит 30 МБ |
 | `node tools/check_fe.mjs` | Playwright: 8 размеров экрана, скриншоты в `shots/`, ошибки консоли, наложения, панель и меню, демо-раунды, макет RGS |
 | `python3 tools/contact_sheet.py 1_idle` | склеивает скриншоты одной стадии в один лист |
-| `python3 tools/chroma_strip.py кадры.zip -o assets/anim/H1_win.webp --size 256 --trim` | хромакей `#00FF00` и сборка ленты webp (сторона ≤ 16383 px) |
+| `python3 tools/chroma_strip.py кадры.zip -o assets/anim/H1_win.webp --size 256 --trim` | хромакей `#00FF00` и сборка ленты webp (сторона ≤ 16383 px); принимает и mp4 |
+| `python3 -I tools/import_part2.py <папка Senbazuru_Part2>` | импорт UI-графики заказчика (рамки, кнопки, бирки, доски, фоны, монеты, линии) в `assets/ui`, `assets/bg`, `assets/lines` |
 | `python3 tools/import_art.py <папка с png>` | импорт присланной графики на зелёном: символы 320 px, ленты анимации (пульс и блик из статичного символа), бейджи, фоны и облегчённые копии, гирлянды 360×1080, бумага 512; на символ W впечатывается WILD (`tools/wild_label.mjs`, шрифт игры) |
 | `python3 tools/import_sound.py <папка с music/ и sfx/>` | импорт звуков: обрезка тишины, −16 LUFS для эффектов и −14 для музыки (короткие щелчки — пик −6 dB), бесшовные петли (кроссфейд), mp3 в `assets/sfx/` и `assets/music/` |
 | `node tools/gen_placeholder_art.mjs` | перерисовывает временную графику (теперь только `--only lines`) |
@@ -73,7 +74,7 @@
   голубое, фриспины — бирюзовое, супербонус — сиреневое. Показ: комбинации по очереди, у каждой сумма на линии, а счётчик Win растёт на эту
   сумму; затем все комбинации вместе. Клетки вне показа затемняются. Пропуск (slam) сразу переходит к общей подсветке.
   Сброс — `clearWins()`: старт вращения, каждое вращение во фриспинах, итог бонуса и `leaveFs()`.
-  Графика — `assets/lines/`: `cord.webp` (плитка 512×80, бесшовная по горизонтали, шнур — 58 px по высоте, см. `ASSETS.lines.band`),
+  Графика — `assets/lines/`: `cord.webp` (плитка 1024×128, бесшовная по горизонтали, шнур — 66 px по высоте, см. `ASSETS.lines.band`),
   `knot.webp` (узел, центр картинки), `tip.webp` (кисточка, смотрит вправо, крепится в точке (0, середина)). Замена — файлом с тем же именем.
 - **Таблички выигрышей** (`winScene` в `index.html`): пороги `CONFIG.winTiers` — NICE от 15×, BIG от 50×, MEGA от 250×, EPIC от 500× ставки,
   MAX — потолок 15000×. Одна нарастающая сцена: сумма отсчитывается с нуля, на переходе порога табличка меняется на следующую со «слэмом»

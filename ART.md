@@ -13,13 +13,18 @@
 |---|---|---|---|
 | `assets/symbols/` | H1–H4, L1–L4, W, S | 320×320 webp, прозрачный фон | финал (заказчик, v7) |
 | `assets/anim/` | `<symbol>_win.webp` | лента 20 кадров 256×256 (5120×256) | временные: пульс и блик из статики (`import_art.py`) |
-| `assets/bg/` | `bg_land`, `bg_port` (+ `_s` облегчённые), `decor_left/right` | 1920×1080, 1080×1920, 960×540, 540×960, 360×1080 | финал (v7) |
+| `assets/anim/` | `S_land` (приземление скаттера), `anticipation` (подсветка колонны), `bigwin_bg` (лучи за табличкой) | ленты 24×256², 48×100×500, 36×256² | финал (заказчик, v13, из видео) |
+| `assets/bg/` | `bg_land`, `bg_port` (+ `_s`), `decor_left/right` | 1920×1080, 1080×1920, 960×540, 540×960, 360×1080 | финал (v7) |
+| `assets/bg/` | `bg_fs_*`, `bg_super_*`, `splash_bg_*` (land/port, + `_s`) | 1920×1080, 1080×1920, 960×540, 540×960 | финал (v13) |
+| `assets/video/` | `bg_land/fs/super` (.webm + .mp4, петли фона, только десктоп) | 1280×720, ~250–480 КБ | финал (v13) |
+| `assets/video/` | `trans_fs`, `trans_super`, `trans_end` (.webm VP9 с альфой; без поддержки — бумажная вспышка) | 1280×720, 2.6 МБ / 294 КБ / 17 КБ | финал (v13) |
+| `assets/ui/` | `frame_base/fs/super` (рамка поля), `btn_spin`, `btn_round(_on)`, `btn_menu`, `btn_bonus`, `btn_ante_on`, `btn_close` (+ `_down`), `icons` (лист 4×4), `tag_value/win/fs` (бирки HUD, 9-slice), `hud_mult`, `plank`, `plank_body` (доски меню/правил, 9-slice), `splash_plank`, `toggle_on/off`, `logo`, `cloud_1..3`, `sun`, `sticky_cell`, `coin`, `coin_edge` | 256…1024 px webp | финал (v13) |
 | `assets/ui/` | `mode_ante/bonus/super`, `paper` | 256×256, 512×512 (9-slice рамка) | финал (v7) |
-| `assets/lines/` | `cord`, `knot`, `tip` | 512×80, 256×256, 256×144 | временные (мидзухики) |
-| `assets/plaques/` | nice, big, mega, epic, max, total | 1024×384, один кадр | временные: ждут спрайт-листы |
+| `assets/lines/` | `cord`, `knot`, `tip` | 1024×128, 256×256, 512×288 | финал (v13, мидзухики) |
+| `assets/plaques/` | nice, big, mega, epic, max, total | ленты 30 кадров 512×192 (15360×192), 12 к/с | финал (v13, из видео) |
 | `assets/intro/` | `studio.webm` + `studio.mp4` | 30 fps, без звука, 125 КБ / 73 КБ | финал (v10) |
 
-Кнопки панели и HUD рисуются CSS/SVG (состояния normal / pressed / active / disabled в коде).
+Кнопки, бирки, рамки и доски — картинки заказчика (v13, `tools/import_part2.py`: зелёный фон → альфа, союз bbox для состояний, webp q84–88); состояния `_down` подменяют картинку целиком. Ленты из видео — `tools/chroma_strip.py` (кадр → хромакей → лента ≤ 16383 px). Живые фоны и переходы — `<video>`; на телефонах (LITE) и без VP9-альфы (Safari) не грузятся, вместо них статика и бумажная вспышка.
 
 ## Слои сцены
 
@@ -27,8 +32,5 @@
 
 ## Осталось
 
-- Спрайт-листы табличек (положить под теми же именами, вписать `fw, fh, frames, cols, fps` в `ASSETS.plaques`).
-- Графика линий и ленты победной анимации символов.
-- Живые фоны (на телефонах не грузятся).
-- Промпты оставшейся графики (43 файла): https://claude.ai/code/artifact/7cb0c36b-3e80-40bc-906d-5747a11d89b7
-- Импорт присланной графики на `#00FF00`: `python3 tools/import_art.py <папка>`, кадры — `tools/chroma_strip.py` (ленты ≤ 16383 px).
+- Видео `logo_loop` и `confetti` из поставки не используются: логотип качается CSS, конфетти рисует код.
+- Импорт новой графики на `#00FF00`: `python3 tools/import_art.py <папка>` (символы) или `tools/import_part2.py <папка>` (UI), кадры — `tools/chroma_strip.py` (ленты ≤ 16383 px).
