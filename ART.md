@@ -103,3 +103,7 @@ Game logo wordmark spelling exactly "SENBAZURU" in one line, bold rounded displa
 | Вермильон (журавль, рамка) | `#D8352A` |
 | Золото | `#E2B04A` |
 | Сакура | `#F6C9D2` |
+
+## Слои тайла (этап 10)
+
+Собраны из готового арта, без генерации: `submission/tile/` — `tile_3x4_background.png` (1536×2048, из `bg_port`), `wide_16x9_background.png` (1920×1080, из `bg_land`), `foreground_crane.png` (журавль H1, прозрачный, вырезан из `keyart_square`), `title_logo.png`, превью. Градиент — вермильон `#D63C28`. Промпты обложки выше остаются запасным вариантом, если ревью попросит другой тайл.
