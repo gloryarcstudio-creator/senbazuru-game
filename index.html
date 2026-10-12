@@ -1140,11 +1140,12 @@ async function playWins(wins, base) {
 
 /* v16: idle-анимации символов, когда барабан стоит. Только кодом из статичных спрайтов symbols/*.webp:
    трансформации, деформация полосками, блик через source-atop и мелкие частицы. Без CSS filter (Safari).
-   У каждой клетки свой сдвиг фазы, акценты (блик, порыв ветра, взмах) — раз в несколько секунд. */
+   Одинаковые символы двигаются синхронно (фаза зависит только от символа), акценты (блик, порыв ветра, взмах) — раз в несколько секунд. */
 const IDLE = { on: CONFIG_IDLE(), fps: 30, last: 0 };
 function CONFIG_IDLE() { const q = new URLSearchParams(location.search).get('idle'); return q !== '0' && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
 const TAU = Math.PI * 2;
 const idleHash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const idlePh = name => idleHash(SYMBOLS.indexOf(name) + 1, 7);   // общая фаза для всех копий символа, у разных символов — разная
 const ease = x => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
 // окно акцента: 0..1 внутри [start, start+len) каждого периода, иначе -1
 const accent = (t, period, len) => { const x = ((t % period) + period) % period; return x < len ? x / len : -1; };
@@ -1325,7 +1326,7 @@ function drawBoard(t) {
         if (f < a.frames && IMG.anim_landFx) { ctx.drawImage(IMG.anim_landFx, (f % a.cols) * a.fw, Math.floor(f / a.cols) * a.fh, a.fw, a.fh, cx - sz / 2, cy - sz / 2, sz, sz); R.dirty = true; continue; }
         R.landFx.delete(rowKey);
       }
-      drawSymbol(name, cx, cy, cell * SYM_SCALE, 1 - blur * 0.14, -1, blur * 0.2, idle ? idleHash(r.i, j) : null, amp);
+      drawSymbol(name, cx, cy, cell * SYM_SCALE, 1 - blur * 0.14, -1, blur * 0.2, idle ? idlePh(name) : null, amp);
     }
     ctx.restore();
   }
@@ -1340,7 +1341,7 @@ function drawBoard(t) {
     ctx.fillStyle = 'rgba(42,67,145,.16)'; ctx.fillRect(x + m, y + m, cell - 2 * m, cell - 2 * m);
     if (IMG.fx_sticky) ctx.drawImage(IMG.fx_sticky, x, y, cell, cell);
     else { ctx.strokeStyle = '#2a4391'; ctx.lineWidth = cell * 0.035; ctx.strokeRect(x + m * 1.6, y + m * 1.6, cell - 3.2 * m, cell - 3.2 * m); }
-    if (!winning) drawSymbol('W', x + cell / 2, y + cell / 2, cell * SYM_SCALE * sc, 1, -1, 0, idleHash(c + 11, r), age < 0.35 ? 0 : ease((age - 0.35) / 0.4));
+    if (!winning) drawSymbol('W', x + cell / 2, y + cell / 2, cell * SYM_SCALE * sc, 1, -1, 0, idlePh('W'), age < 0.35 ? 0 : ease((age - 0.35) / 0.4));
   }
   const badges = [];
   for (const [key, mult] of R.sticky) badges.push([key, mult]);
