@@ -6,6 +6,7 @@
  */
 window.I18N = {
 en: {
+  secControls: "Buttons", ctlSpin: "Starts a spin at the current bet amount. During a spin it stops the reels sooner.", ctlTurbo: "Turns fast spins on and off.", ctlAuto: "Opens the autoplay settings: number of spins and stop limits. Autoplay starts only after you press Start. During autoplay this button stops it.", ctlBet: "Lower or raise the bet amount one level.", ctlBetMenu: "Shows the bet amount; tap it to pick any bet level from the list.", ctlBonus: "Opens the bonus modes menu. While Ante is on, this button turns it off.", ctlMenu: "Opens the menu with Info, Settings and Sound.", ctlInfo: "Opens these game rules.", ctlSettings: "Music, sound effects and the space bar on or off.", ctlSound: "Turns all game sounds on or off.", ctlSpaceT: "Space bar", ctlSpace: "Starts a spin, like the Spin button. It can be turned off in Settings.", ctlSlamT: "Tap the reels", ctlSlam: "During a spin it stops the reels sooner.", ctlClose: "Closes the open window.",
   menu: "Menu", info: "Info", settings: "Settings", setMusic: "Music", setSfx: "Sound effects", setSpace: "Space bar starts a spin",
   autoRounds: "Number of rounds", autoLoss: "Stop when the balance has dropped by", autoWin: "Stop when a single win reaches", noLimit: "No limit", volatility: "Volatility", volHigh: "High",
   buyLocked: "Bonus buys are unavailable while Ante is on. Deactivate Ante first.", hudMult: "Multiplier", msgIdle: "Press Spin to play", msgGood: "Good luck!", msgWin: "You won {amount}", msgFs: "Free spin {i} of {n}", msgAuto: "Autoplay: {n} rounds left",
@@ -82,9 +83,12 @@ en: {
   maxText: "The maximum win is {max}× the bet amount: {amount} at the current bet amount.",
   maxText2: "When a round reaches it, the round ends at once: remaining free spins are not played and the win is {max}×.",
   pressStart: "Press to continue",
-  rtpLine: "Theoretical RTP: {rtp}%"
+  rtpLine: "Theoretical RTP: {rtp}%",
+  colMode: "Mode",
+  colPrice: "Price"
 },
 ru: {
+  secControls: "Кнопки", ctlSpin: "Запускает вращение с текущей ставкой. Во время вращения останавливает барабаны быстрее.", ctlTurbo: "Включает и выключает быстрые вращения.", ctlAuto: "Открывает настройки автоигры: число вращений и лимиты остановки. Автоигра начинается только после нажатия «Старт». Во время автоигры кнопка её останавливает.", ctlBet: "Понизить или повысить ставку на один уровень.", ctlBetMenu: "Показывает ставку; нажмите, чтобы выбрать любой уровень ставки из списка.", ctlBonus: "Открывает меню бонусных режимов. Когда анте включено, кнопка его выключает.", ctlMenu: "Открывает меню: правила, настройки и звук.", ctlInfo: "Открывает эти правила игры.", ctlSettings: "Музыка, звуковые эффекты и пробел — включить или выключить.", ctlSound: "Включает и выключает все звуки игры.", ctlSpaceT: "Пробел", ctlSpace: "Запускает вращение, как кнопка вращения. Можно отключить в настройках.", ctlSlamT: "Нажатие на барабаны", ctlSlam: "Во время вращения останавливает барабаны быстрее.", ctlClose: "Закрывает открытое окно.",
   menu: "Меню", info: "Инфо", settings: "Настройки", setMusic: "Музыка", setSfx: "Звуковые эффекты", setSpace: "Пробел запускает вращение",
   autoRounds: "Число раундов", autoLoss: "Остановить, когда баланс уменьшится на", autoWin: "Остановить, когда один выигрыш достигнет", noLimit: "Без лимита", volatility: "Волатильность", volHigh: "Высокая",
   buyLocked: "Пока включено анте, покупка бонусов недоступна. Сначала выключите анте.", hudMult: "Множитель", msgIdle: "Нажмите вращение, чтобы играть", msgGood: "Удачи!", msgWin: "Вы выиграли {amount}", msgFs: "Фриспин {i} из {n}", msgAuto: "Автоигра: осталось раундов — {n}",
@@ -161,9 +165,12 @@ ru: {
   maxText: "Максимальный выигрыш — {max}× ставки: {amount} при текущей ставке.",
   maxText2: "Когда раунд его достигает, он сразу заканчивается: оставшиеся фриспины не играются, выигрыш — {max}×.",
   pressStart: "Нажмите, чтобы продолжить",
-  rtpLine: "Теоретический RTP: {rtp}%"
+  rtpLine: "Теоретический RTP: {rtp}%",
+  colMode: "Режим",
+  colPrice: "Цена"
 },
 de: {
+  secControls: "Tasten", ctlSpin: "Startet einen Spin mit dem aktuellen Einsatz. Während des Spins stoppt sie die Walzen früher.", ctlTurbo: "Schaltet schnelle Spins ein und aus.", ctlAuto: "Öffnet die Autoplay-Einstellungen: Anzahl der Spins und Stopp-Limits. Autoplay startet erst, nachdem Sie Start drücken. Während Autoplay stoppt diese Taste es.", ctlBet: "Einsatz um eine Stufe senken oder erhöhen.", ctlBetMenu: "Zeigt den Einsatz; antippen, um eine beliebige Einsatzstufe aus der Liste zu wählen.", ctlBonus: "Öffnet das Menü der Bonusmodi. Ist Ante aktiv, schaltet diese Taste es aus.", ctlMenu: "Öffnet das Menü mit Info, Einstellungen und Ton.", ctlInfo: "Öffnet diese Spielregeln.", ctlSettings: "Musik, Soundeffekte und Leertaste ein oder aus.", ctlSound: "Schaltet alle Spielsounds ein oder aus.", ctlSpaceT: "Leertaste", ctlSpace: "Startet einen Spin wie die Spin-Taste. In den Einstellungen abschaltbar.", ctlSlamT: "Walzen antippen", ctlSlam: "Während eines Spins stoppt das die Walzen früher.", ctlClose: "Schließt das offene Fenster.",
   menu: "Menü", info: "Info", settings: "Einstellungen", setMusic: "Musik", setSfx: "Soundeffekte", setSpace: "Leertaste startet eine Drehung",
   autoRounds: "Anzahl der Runden", autoLoss: "Stoppen, wenn das Guthaben gesunken ist um", autoWin: "Stoppen, wenn ein einzelner Gewinn erreicht", noLimit: "Kein Limit", volatility: "Volatilität", volHigh: "Hoch",
   buyLocked: "Solange Ante aktiv ist, sind Bonuskäufe nicht verfügbar. Deaktiviere zuerst Ante.", hudMult: "Multiplikator", msgIdle: "Drücke Drehen, um zu spielen", msgGood: "Viel Glück!", msgWin: "Du hast {amount} gewonnen", msgFs: "Freispiel {i} von {n}", msgAuto: "Autoplay: noch {n} Runden",
@@ -240,9 +247,12 @@ de: {
   maxText: "Der Maximalgewinn beträgt das {max}-Fache des Einsatzes: {amount} beim aktuellen Einsatz.",
   maxText2: "Erreicht eine Runde ihn, endet sie sofort: Verbleibende Freispiele werden nicht gespielt, der Gewinn beträgt {max}×.",
   pressStart: "Tippen, um fortzufahren",
-  rtpLine: "Theoretischer RTP: {rtp} %"
+  rtpLine: "Theoretischer RTP: {rtp} %",
+  colMode: "Modus",
+  colPrice: "Preis"
 },
 es: {
+  secControls: "Botones", ctlSpin: "Inicia un giro con la apuesta actual. Durante el giro detiene los rodillos antes.", ctlTurbo: "Activa y desactiva los giros rápidos.", ctlAuto: "Abre los ajustes del juego automático: número de giros y límites de parada. Empieza solo al pulsar Iniciar. Durante el juego automático, este botón lo detiene.", ctlBet: "Bajar o subir la apuesta un nivel.", ctlBetMenu: "Muestra la apuesta; tócala para elegir cualquier nivel de la lista.", ctlBonus: "Abre el menú de modos de bono. Con Ante activo, este botón lo desactiva.", ctlMenu: "Abre el menú con Info, Ajustes y Sonido.", ctlInfo: "Abre estas reglas del juego.", ctlSettings: "Música, efectos de sonido y barra espaciadora: activar o desactivar.", ctlSound: "Activa o desactiva todos los sonidos del juego.", ctlSpaceT: "Barra espaciadora", ctlSpace: "Inicia un giro, como el botón de girar. Se puede desactivar en Ajustes.", ctlSlamT: "Tocar los rodillos", ctlSlam: "Durante un giro detiene los rodillos antes.", ctlClose: "Cierra la ventana abierta.",
   menu: "Menú", info: "Info", settings: "Ajustes", setMusic: "Música", setSfx: "Efectos de sonido", setSpace: "La barra espaciadora inicia un giro",
   autoRounds: "Número de rondas", autoLoss: "Detener cuando el saldo haya bajado", autoWin: "Detener cuando un solo premio alcance", noLimit: "Sin límite", volatility: "Volatilidad", volHigh: "Alta",
   buyLocked: "Mientras el ante está activo no se pueden comprar bonos. Desactiva primero el ante.", hudMult: "Multiplicador", msgIdle: "Pulsa Girar para jugar", msgGood: "¡Buena suerte!", msgWin: "Has ganado {amount}", msgFs: "Giro gratis {i} de {n}", msgAuto: "Juego automático: quedan {n} rondas",
@@ -319,9 +329,12 @@ es: {
   maxText: "El premio máximo es {max}× la apuesta: {amount} con la apuesta actual.",
   maxText2: "Cuando una ronda lo alcanza, termina al instante: los giros gratis restantes no se juegan y el premio es {max}×.",
   pressStart: "Pulsa para continuar",
-  rtpLine: "RTP teórico: {rtp} %"
+  rtpLine: "RTP teórico: {rtp} %",
+  colMode: "Modo",
+  colPrice: "Precio"
 },
 fr: {
+  secControls: "Boutons", ctlSpin: "Lance un tour avec la mise actuelle. Pendant le tour, arrête les rouleaux plus tôt.", ctlTurbo: "Active ou désactive les tours rapides.", ctlAuto: "Ouvre les réglages du jeu automatique : nombre de tours et limites d'arrêt. Il ne démarre qu'après avoir appuyé sur Démarrer. Pendant le jeu automatique, ce bouton l'arrête.", ctlBet: "Baisser ou augmenter la mise d'un niveau.", ctlBetMenu: "Affiche la mise ; touchez-la pour choisir un niveau dans la liste.", ctlBonus: "Ouvre le menu des modes bonus. Quand Ante est actif, ce bouton le désactive.", ctlMenu: "Ouvre le menu avec Info, Réglages et Son.", ctlInfo: "Ouvre ces règles du jeu.", ctlSettings: "Musique, effets sonores et barre d'espace : activer ou désactiver.", ctlSound: "Active ou coupe tous les sons du jeu.", ctlSpaceT: "Barre d'espace", ctlSpace: "Lance un tour, comme le bouton de tour. Désactivable dans les Réglages.", ctlSlamT: "Toucher les rouleaux", ctlSlam: "Pendant un tour, arrête les rouleaux plus tôt.", ctlClose: "Ferme la fenêtre ouverte.",
   menu: "Menu", info: "Infos", settings: "Réglages", setMusic: "Musique", setSfx: "Effets sonores", setSpace: "La barre d’espace lance un tour",
   autoRounds: "Nombre de manches", autoLoss: "Arrêter quand le solde a baissé de", autoWin: "Arrêter quand un seul gain atteint", noLimit: "Sans limite", volatility: "Volatilité", volHigh: "Élevée",
   buyLocked: "Tant que l’ante est actif, l’achat de bonus est indisponible. Désactivez d’abord l’ante.", hudMult: "Multiplicateur", msgIdle: "Appuyez sur Lancer pour jouer", msgGood: "Bonne chance !", msgWin: "Vous avez gagné {amount}", msgFs: "Tour gratuit {i} sur {n}", msgAuto: "Jeu automatique : {n} manches restantes",
@@ -398,9 +411,12 @@ fr: {
   maxText: "Le gain maximum est de {max}× la mise : {amount} avec la mise actuelle.",
   maxText2: "Quand une manche l’atteint, elle se termine aussitôt : les tours gratuits restants ne sont pas joués et le gain est de {max}×.",
   pressStart: "Appuyez pour continuer",
-  rtpLine: "RTP théorique : {rtp} %"
+  rtpLine: "RTP théorique : {rtp} %",
+  colMode: "Mode",
+  colPrice: "Prix"
 },
 pt: {
+  secControls: "Botões", ctlSpin: "Inicia um giro com a aposta atual. Durante o giro, para os rolos mais cedo.", ctlTurbo: "Liga e desliga os giros rápidos.", ctlAuto: "Abre as configurações do jogo automático: número de giros e limites de parada. Só começa depois de tocar em Iniciar. Durante o jogo automático, este botão o interrompe.", ctlBet: "Diminuir ou aumentar a aposta em um nível.", ctlBetMenu: "Mostra a aposta; toque para escolher qualquer nível da lista.", ctlBonus: "Abre o menu de modos de bônus. Com Ante ativo, este botão o desliga.", ctlMenu: "Abre o menu com Info, Configurações e Som.", ctlInfo: "Abre estas regras do jogo.", ctlSettings: "Música, efeitos sonoros e barra de espaço: ligar ou desligar.", ctlSound: "Liga ou desliga todos os sons do jogo.", ctlSpaceT: "Barra de espaço", ctlSpace: "Inicia um giro, como o botão de girar. Pode ser desligada nas Configurações.", ctlSlamT: "Tocar nos rolos", ctlSlam: "Durante um giro, para os rolos mais cedo.", ctlClose: "Fecha a janela aberta.",
   menu: "Menu", info: "Info", settings: "Configurações", setMusic: "Música", setSfx: "Efeitos sonoros", setSpace: "A barra de espaço inicia um giro",
   autoRounds: "Número de rodadas", autoLoss: "Parar quando o saldo cair", autoWin: "Parar quando um único ganho chegar a", noLimit: "Sem limite", volatility: "Volatilidade", volHigh: "Alta",
   buyLocked: "Enquanto o ante estiver ligado, a compra de bônus fica indisponível. Desligue o ante primeiro.", hudMult: "Multiplicador", msgIdle: "Toque em Girar para jogar", msgGood: "Boa sorte!", msgWin: "Você ganhou {amount}", msgFs: "Rodada grátis {i} de {n}", msgAuto: "Jogo automático: faltam {n} rodadas",
@@ -477,9 +493,12 @@ pt: {
   maxText: "O ganho máximo é {max}× a aposta: {amount} com a aposta atual.",
   maxText2: "Quando uma rodada o atinge, ela termina na hora: as rodadas grátis restantes não são jogadas e o ganho é {max}×.",
   pressStart: "Toque para continuar",
-  rtpLine: "RTP teórico: {rtp}%"
+  rtpLine: "RTP teórico: {rtp}%",
+  colMode: "Modo",
+  colPrice: "Preço"
 },
 tr: {
+  secControls: "Düğmeler", ctlSpin: "Geçerli bahis tutarıyla bir çevirme başlatır. Çevirme sırasında makaraları daha erken durdurur.", ctlTurbo: "Hızlı çevirmeleri açar ve kapatır.", ctlAuto: "Otomatik oyun ayarlarını açar: çevirme sayısı ve durdurma sınırları. Otomatik oyun yalnızca Başlat'a bastıktan sonra başlar. Otomatik oyun sırasında bu düğme onu durdurur.", ctlBet: "Bahis tutarını bir seviye düşürür veya artırır.", ctlBetMenu: "Bahis tutarını gösterir; listeden herhangi bir seviyeyi seçmek için dokunun.", ctlBonus: "Bonus modları menüsünü açar. Ante açıkken bu düğme onu kapatır.", ctlMenu: "Bilgi, Ayarlar ve Ses içeren menüyü açar.", ctlInfo: "Bu oyun kurallarını açar.", ctlSettings: "Müzik, ses efektleri ve boşluk tuşunu açar veya kapatır.", ctlSound: "Tüm oyun seslerini açar veya kapatır.", ctlSpaceT: "Boşluk tuşu", ctlSpace: "Çevirme düğmesi gibi bir çevirme başlatır. Ayarlardan kapatılabilir.", ctlSlamT: "Makaralara dokunma", ctlSlam: "Çevirme sırasında makaraları daha erken durdurur.", ctlClose: "Açık pencereyi kapatır.",
   menu: "Menü", info: "Bilgi", settings: "Ayarlar", setMusic: "Müzik", setSfx: "Ses efektleri", setSpace: "Boşluk tuşu dönüşü başlatır",
   autoRounds: "Tur sayısı", autoLoss: "Bakiye şu kadar düşünce dur", autoWin: "Tek bir kazanç şuna ulaşınca dur", noLimit: "Limit yok", volatility: "Volatilite", volHigh: "Yüksek",
   buyLocked: "Ante açıkken bonus satın alınamaz. Önce anteyi kapatın.", hudMult: "Çarpan", msgIdle: "Oynamak için Döndür’e basın", msgGood: "Bol şans!", msgWin: "{amount} kazandınız", msgFs: "Bedava dönüş {i} / {n}", msgAuto: "Otomatik oyun: {n} tur kaldı",
@@ -556,9 +575,12 @@ tr: {
   maxText: "Maksimum kazanç bahis tutarının {max} katıdır: geçerli bahis tutarında {amount}.",
   maxText2: "Bir tur buna ulaştığında hemen sona erer: kalan bedava dönüşler oynanmaz ve kazanç {max}× olur.",
   pressStart: "Devam etmek için dokunun",
-  rtpLine: "Teorik RTP: %{rtp}"
+  rtpLine: "Teorik RTP: %{rtp}",
+  colMode: "Mod",
+  colPrice: "Fiyat"
 },
 pl: {
+  secControls: "Przyciski", ctlSpin: "Rozpoczyna spin z bieżącą stawką. W trakcie spinu szybciej zatrzymuje bębny.", ctlTurbo: "Włącza i wyłącza szybkie spiny.", ctlAuto: "Otwiera ustawienia autogry: liczba spinów i limity zatrzymania. Autogra rusza dopiero po naciśnięciu Start. W trakcie autogry ten przycisk ją zatrzymuje.", ctlBet: "Obniża lub podnosi stawkę o jeden poziom.", ctlBetMenu: "Pokazuje stawkę; dotknij, aby wybrać dowolny poziom z listy.", ctlBonus: "Otwiera menu trybów bonusowych. Gdy Ante jest włączone, ten przycisk je wyłącza.", ctlMenu: "Otwiera menu z informacjami, ustawieniami i dźwiękiem.", ctlInfo: "Otwiera te zasady gry.", ctlSettings: "Muzyka, efekty dźwiękowe i spacja — włącz lub wyłącz.", ctlSound: "Włącza lub wyłącza wszystkie dźwięki gry.", ctlSpaceT: "Spacja", ctlSpace: "Rozpoczyna spin, jak przycisk spinu. Można ją wyłączyć w ustawieniach.", ctlSlamT: "Dotknięcie bębnów", ctlSlam: "W trakcie spinu szybciej zatrzymuje bębny.", ctlClose: "Zamyka otwarte okno.",
   menu: "Menu", info: "Info", settings: "Ustawienia", setMusic: "Muzyka", setSfx: "Efekty dźwiękowe", setSpace: "Spacja uruchamia spin",
   autoRounds: "Liczba rund", autoLoss: "Zatrzymaj, gdy saldo spadnie o", autoWin: "Zatrzymaj, gdy pojedyncza wygrana osiągnie", noLimit: "Bez limitu", volatility: "Zmienność", volHigh: "Wysoka",
   buyLocked: "Gdy ante jest włączone, zakup bonusów jest niedostępny. Najpierw wyłącz ante.", hudMult: "Mnożnik", msgIdle: "Naciśnij Zakręć, aby zagrać", msgGood: "Powodzenia!", msgWin: "Wygrywasz {amount}", msgFs: "Darmowy spin {i} z {n}", msgAuto: "Autogra: pozostało rund: {n}",
@@ -635,9 +657,12 @@ pl: {
   maxText: "Maksymalna wygrana to {max}× stawki: {amount} przy bieżącej stawce.",
   maxText2: "Gdy runda ją osiągnie, od razu się kończy: pozostałe darmowe spiny nie są rozgrywane, a wygrana wynosi {max}×.",
   pressStart: "Dotknij, aby kontynuować",
-  rtpLine: "Teoretyczny RTP: {rtp}%"
+  rtpLine: "Teoretyczny RTP: {rtp}%",
+  colMode: "Tryb",
+  colPrice: "Cena"
 },
 fi: {
+  secControls: "Painikkeet", ctlSpin: "Käynnistää pyöräytyksen nykyisellä panoksella. Pyöräytyksen aikana pysäyttää kiekot nopeammin.", ctlTurbo: "Kytkee nopeat pyöräytykset päälle ja pois.", ctlAuto: "Avaa automaattipelin asetukset: pyöräytysten määrä ja pysäytysrajat. Automaattipeli alkaa vasta, kun painat Aloita. Automaattipelin aikana tämä painike pysäyttää sen.", ctlBet: "Laske tai nosta panosta yhden tason.", ctlBetMenu: "Näyttää panoksen; napauta valitaksesi minkä tahansa tason listasta.", ctlBonus: "Avaa bonustilojen valikon. Kun Ante on päällä, tämä painike kytkee sen pois.", ctlMenu: "Avaa valikon: tiedot, asetukset ja ääni.", ctlInfo: "Avaa nämä pelisäännöt.", ctlSettings: "Musiikki, äänitehosteet ja välilyönti päälle tai pois.", ctlSound: "Kytkee kaikki pelin äänet päälle tai pois.", ctlSpaceT: "Välilyönti", ctlSpace: "Käynnistää pyöräytyksen kuten pyöräytyspainike. Voidaan kytkeä pois asetuksista.", ctlSlamT: "Kiekkojen napautus", ctlSlam: "Pyöräytyksen aikana pysäyttää kiekot nopeammin.", ctlClose: "Sulkee avoimen ikkunan.",
   menu: "Valikko", info: "Tiedot", settings: "Asetukset", setMusic: "Musiikki", setSfx: "Äänitehosteet", setSpace: "Välilyönti käynnistää pyöräytyksen",
   autoRounds: "Kierrosten määrä", autoLoss: "Pysäytä, kun saldo on laskenut", autoWin: "Pysäytä, kun yksittäinen voitto on vähintään", noLimit: "Ei rajaa", volatility: "Volatiliteetti", volHigh: "Korkea",
   buyLocked: "Bonusostot eivät ole käytettävissä, kun ante on päällä. Poista ante ensin käytöstä.", hudMult: "Kerroin", msgIdle: "Pelaa painamalla Pyöräytä", msgGood: "Onnea!", msgWin: "Voitit {amount}", msgFs: "Ilmaiskierros {i}/{n}", msgAuto: "Automaattipeli: {n} kierrosta jäljellä",
@@ -714,9 +739,12 @@ fi: {
   maxText: "Suurin voitto on {max}× panos: {amount} nykyisellä panoksella.",
   maxText2: "Kun kierros saavuttaa sen, kierros päättyy heti: jäljellä olevia ilmaiskierroksia ei pelata ja voitto on {max}×.",
   pressStart: "Jatka napauttamalla",
-  rtpLine: "Teoreettinen RTP: {rtp} %"
+  rtpLine: "Teoreettinen RTP: {rtp} %",
+  colMode: "Tila",
+  colPrice: "Hinta"
 },
 id: {
+  secControls: "Tombol", ctlSpin: "Memulai putaran dengan jumlah taruhan saat ini. Saat berputar, menghentikan gulungan lebih cepat.", ctlTurbo: "Menyalakan dan mematikan putaran cepat.", ctlAuto: "Membuka pengaturan putar otomatis: jumlah putaran dan batas berhenti. Putar otomatis baru dimulai setelah Anda menekan Mulai. Selama putar otomatis, tombol ini menghentikannya.", ctlBet: "Menurunkan atau menaikkan taruhan satu tingkat.", ctlBetMenu: "Menampilkan jumlah taruhan; ketuk untuk memilih tingkat mana pun dari daftar.", ctlBonus: "Membuka menu mode bonus. Saat Ante aktif, tombol ini mematikannya.", ctlMenu: "Membuka menu Info, Pengaturan, dan Suara.", ctlInfo: "Membuka aturan permainan ini.", ctlSettings: "Musik, efek suara, dan tombol spasi: nyalakan atau matikan.", ctlSound: "Menyalakan atau mematikan semua suara permainan.", ctlSpaceT: "Tombol spasi", ctlSpace: "Memulai putaran seperti tombol putar. Dapat dimatikan di Pengaturan.", ctlSlamT: "Ketuk gulungan", ctlSlam: "Saat berputar, menghentikan gulungan lebih cepat.", ctlClose: "Menutup jendela yang terbuka.",
   menu: "Menu", info: "Info", settings: "Pengaturan", setMusic: "Musik", setSfx: "Efek suara", setSpace: "Tombol spasi memulai putaran",
   autoRounds: "Jumlah ronde", autoLoss: "Berhenti saat saldo turun sebesar", autoWin: "Berhenti saat satu kemenangan mencapai", noLimit: "Tanpa batas", volatility: "Volatilitas", volHigh: "Tinggi",
   buyLocked: "Selama ante aktif, pembelian bonus tidak tersedia. Nonaktifkan ante lebih dulu.", hudMult: "Pengali", msgIdle: "Tekan Putar untuk bermain", msgGood: "Semoga beruntung!", msgWin: "Anda menang {amount}", msgFs: "Putaran gratis {i} dari {n}", msgAuto: "Main otomatis: tersisa {n} ronde",
@@ -793,9 +821,12 @@ id: {
   maxText: "Kemenangan maksimum adalah {max}× taruhan: {amount} pada taruhan saat ini.",
   maxText2: "Saat ronde mencapainya, ronde langsung berakhir: sisa putaran gratis tidak dimainkan dan kemenangannya {max}×.",
   pressStart: "Ketuk untuk melanjutkan",
-  rtpLine: "RTP teoretis: {rtp}%"
+  rtpLine: "RTP teoretis: {rtp}%",
+  colMode: "Mode",
+  colPrice: "Harga"
 },
 vi: {
+  secControls: "Các nút", ctlSpin: "Bắt đầu một lượt quay với mức cược hiện tại. Trong lượt quay, dừng các cuộn sớm hơn.", ctlTurbo: "Bật và tắt quay nhanh.", ctlAuto: "Mở cài đặt tự động quay: số lượt quay và giới hạn dừng. Tự động quay chỉ bắt đầu sau khi bạn nhấn Bắt đầu. Khi đang tự động quay, nút này sẽ dừng nó.", ctlBet: "Giảm hoặc tăng mức cược một bậc.", ctlBetMenu: "Hiển thị mức cược; chạm để chọn bất kỳ mức nào trong danh sách.", ctlBonus: "Mở menu các chế độ thưởng. Khi Ante đang bật, nút này sẽ tắt nó.", ctlMenu: "Mở menu gồm Thông tin, Cài đặt và Âm thanh.", ctlInfo: "Mở luật chơi này.", ctlSettings: "Bật hoặc tắt nhạc, hiệu ứng âm thanh và phím cách.", ctlSound: "Bật hoặc tắt toàn bộ âm thanh trò chơi.", ctlSpaceT: "Phím cách", ctlSpace: "Bắt đầu một lượt quay như nút quay. Có thể tắt trong Cài đặt.", ctlSlamT: "Chạm vào cuộn", ctlSlam: "Trong lượt quay, dừng các cuộn sớm hơn.", ctlClose: "Đóng cửa sổ đang mở.",
   menu: "Menu", info: "Thông tin", settings: "Cài đặt", setMusic: "Nhạc", setSfx: "Hiệu ứng âm thanh", setSpace: "Phím cách bắt đầu lượt quay",
   autoRounds: "Số vòng chơi", autoLoss: "Dừng khi số dư giảm", autoWin: "Dừng khi một lần thắng đạt", noLimit: "Không giới hạn", volatility: "Độ biến động", volHigh: "Cao",
   buyLocked: "Khi ante đang bật, không thể mua thưởng. Hãy tắt ante trước.", hudMult: "Hệ số nhân", msgIdle: "Nhấn Quay để chơi", msgGood: "Chúc may mắn!", msgWin: "Bạn thắng {amount}", msgFs: "Vòng miễn phí {i}/{n}", msgAuto: "Tự động chơi: còn {n} vòng",
@@ -872,9 +903,12 @@ vi: {
   maxText: "Mức thắng tối đa là {max}× mức cược: {amount} với mức cược hiện tại.",
   maxText2: "Khi một ván đạt mức này, ván kết thúc ngay: các vòng miễn phí còn lại không được chơi và tiền thắng là {max}×.",
   pressStart: "Chạm để tiếp tục",
-  rtpLine: "RTP lý thuyết: {rtp}%"
+  rtpLine: "RTP lý thuyết: {rtp}%",
+  colMode: "Chế độ",
+  colPrice: "Giá"
 },
 ja: {
+  secControls: "ボタン", ctlSpin: "現在のベット額でスピンを開始します。スピン中はリールを早く止めます。", ctlTurbo: "高速スピンのオン・オフを切り替えます。", ctlAuto: "オートプレイ設定を開きます：スピン回数と停止条件。「スタート」を押すまでオートプレイは始まりません。オートプレイ中はこのボタンで停止します。", ctlBet: "ベット額を1段階下げる、または上げます。", ctlBetMenu: "ベット額を表示します。タップすると一覧から任意のベット額を選べます。", ctlBonus: "ボーナスモードのメニューを開きます。アンティがオンのときは、このボタンでオフにします。", ctlMenu: "情報・設定・サウンドのメニューを開きます。", ctlInfo: "このゲームルールを開きます。", ctlSettings: "音楽、効果音、スペースキーのオン・オフ。", ctlSound: "ゲームのすべての音をオン・オフします。", ctlSpaceT: "スペースキー", ctlSpace: "スピンボタンと同じくスピンを開始します。設定でオフにできます。", ctlSlamT: "リールをタップ", ctlSlam: "スピン中にリールを早く止めます。", ctlClose: "開いているウィンドウを閉じます。",
   menu: "メニュー", info: "情報", settings: "設定", setMusic: "音楽", setSfx: "効果音", setSpace: "スペースキーでスピン",
   autoRounds: "ラウンド数", autoLoss: "残高が次の額だけ減ったら停止", autoWin: "1回の配当が次の額に達したら停止", noLimit: "制限なし", volatility: "ボラティリティ", volHigh: "高い",
   buyLocked: "アンティがオンの間はボーナスを購入できません。先にアンティをオフにしてください。", hudMult: "倍率", msgIdle: "スピンを押してプレイ", msgGood: "グッドラック！", msgWin: "{amount}の配当", msgFs: "フリースピン {i}／{n}", msgAuto: "オートプレイ：残り{n}ラウンド",
@@ -951,9 +985,12 @@ ja: {
   maxText: "最大配当はベット額の{max}倍です。現在のベット額では{amount}です。",
   maxText2: "ラウンドがこれに達すると、その場で終了します。残りのフリースピンはプレイされず、配当は{max}倍になります。",
   pressStart: "タップして続行",
-  rtpLine: "理論RTP：{rtp}%"
+  rtpLine: "理論RTP：{rtp}%",
+  colMode: "モード",
+  colPrice: "価格"
 },
 ko: {
+  secControls: "버튼", ctlSpin: "현재 베팅 금액으로 스핀을 시작합니다. 스핀 중에는 릴을 더 빨리 멈춥니다.", ctlTurbo: "빠른 스핀을 켜고 끕니다.", ctlAuto: "자동 플레이 설정을 엽니다: 스핀 횟수와 중지 조건. 시작을 눌러야 자동 플레이가 시작됩니다. 자동 플레이 중에는 이 버튼으로 중지합니다.", ctlBet: "베팅 금액을 한 단계 낮추거나 높입니다.", ctlBetMenu: "베팅 금액을 표시합니다. 탭하면 목록에서 원하는 단계를 고를 수 있습니다.", ctlBonus: "보너스 모드 메뉴를 엽니다. 앤티가 켜져 있으면 이 버튼으로 끕니다.", ctlMenu: "정보, 설정, 사운드 메뉴를 엽니다.", ctlInfo: "이 게임 규칙을 엽니다.", ctlSettings: "음악, 효과음, 스페이스 바를 켜거나 끕니다.", ctlSound: "게임의 모든 소리를 켜거나 끕니다.", ctlSpaceT: "스페이스 바", ctlSpace: "스핀 버튼처럼 스핀을 시작합니다. 설정에서 끌 수 있습니다.", ctlSlamT: "릴 탭", ctlSlam: "스핀 중에 릴을 더 빨리 멈춥니다.", ctlClose: "열린 창을 닫습니다.",
   menu: "메뉴", info: "정보", settings: "설정", setMusic: "음악", setSfx: "효과음", setSpace: "스페이스 바로 스핀 시작",
   autoRounds: "라운드 수", autoLoss: "잔액이 다음만큼 줄면 정지", autoWin: "한 번의 당첨금이 다음에 이르면 정지", noLimit: "제한 없음", volatility: "변동성", volHigh: "높음",
   buyLocked: "앤티가 켜져 있는 동안에는 보너스를 구매할 수 없습니다. 먼저 앤티를 끄세요.", hudMult: "배수", msgIdle: "스핀을 눌러 플레이", msgGood: "행운을 빕니다!", msgWin: "{amount} 당첨", msgFs: "프리 스핀 {i}/{n}", msgAuto: "자동 플레이: {n}라운드 남음",
@@ -1030,9 +1067,12 @@ ko: {
   maxText: "최대 당첨은 베팅 금액의 {max}배입니다. 현재 베팅 금액으로는 {amount}입니다.",
   maxText2: "라운드가 여기에 도달하면 즉시 끝납니다. 남은 프리 스핀은 진행되지 않으며 당첨금은 {max}배입니다.",
   pressStart: "계속하려면 누르세요",
-  rtpLine: "이론적 RTP: {rtp}%"
+  rtpLine: "이론적 RTP: {rtp}%",
+  colMode: "모드",
+  colPrice: "가격"
 },
 zh: {
+  secControls: "按钮", ctlSpin: "以当前投注额开始旋转。旋转过程中可让转轴更快停止。", ctlTurbo: "开启或关闭快速旋转。", ctlAuto: "打开自动游戏设置：旋转次数和停止条件。按下“开始”后自动游戏才会开始。自动游戏期间，此按钮用于停止。", ctlBet: "将投注额降低或提高一级。", ctlBetMenu: "显示投注额；点击可从列表中选择任意投注级别。", ctlBonus: "打开奖励模式菜单。Ante 开启时，此按钮将其关闭。", ctlMenu: "打开包含信息、设置和声音的菜单。", ctlInfo: "打开本游戏规则。", ctlSettings: "开启或关闭音乐、音效和空格键。", ctlSound: "开启或关闭所有游戏声音。", ctlSpaceT: "空格键", ctlSpace: "与旋转按钮一样开始旋转。可在设置中关闭。", ctlSlamT: "点击转轴", ctlSlam: "旋转过程中让转轴更快停止。", ctlClose: "关闭当前窗口。",
   menu: "菜单", info: "信息", settings: "设置", setMusic: "音乐", setSfx: "音效", setSpace: "空格键开始旋转",
   autoRounds: "局数", autoLoss: "余额减少达到以下数额时停止", autoWin: "单次赢取达到以下数额时停止", noLimit: "不限", volatility: "波动性", volHigh: "高",
   buyLocked: "加注开启时无法购买奖励。请先关闭加注。", hudMult: "倍数", msgIdle: "按旋转开始游戏", msgGood: "祝你好运！", msgWin: "您赢得 {amount}", msgFs: "免费旋转 {i}/{n}", msgAuto: "自动游戏：剩余 {n} 局",
@@ -1109,9 +1149,12 @@ zh: {
   maxText: "最高赢取为投注额的 {max} 倍：按当前投注额为 {amount}。",
   maxText2: "一局达到该金额时立即结束：剩余的免费旋转不再进行，赢取为 {max}×。",
   pressStart: "点击继续",
-  rtpLine: "理论 RTP：{rtp}%"
+  rtpLine: "理论 RTP：{rtp}%",
+  colMode: "模式",
+  colPrice: "价格"
 },
 hi: {
+  secControls: "बटन", ctlSpin: "मौजूदा बेट राशि पर स्पिन शुरू करता है। स्पिन के दौरान रील जल्दी रोकता है।", ctlTurbo: "तेज़ स्पिन चालू और बंद करता है।", ctlAuto: "ऑटोप्ले सेटिंग्स खोलता है: स्पिन की संख्या और रुकने की सीमाएँ। ऑटोप्ले तभी शुरू होता है जब आप स्टार्ट दबाते हैं। ऑटोप्ले के दौरान यह बटन उसे रोकता है।", ctlBet: "बेट राशि एक स्तर घटाएँ या बढ़ाएँ।", ctlBetMenu: "बेट राशि दिखाता है; सूची से कोई भी स्तर चुनने के लिए टैप करें।", ctlBonus: "बोनस मोड मेनू खोलता है। एंटे चालू होने पर यह बटन उसे बंद करता है।", ctlMenu: "जानकारी, सेटिंग्स और ध्वनि वाला मेनू खोलता है।", ctlInfo: "ये खेल नियम खोलता है।", ctlSettings: "संगीत, ध्वनि प्रभाव और स्पेस बार चालू या बंद।", ctlSound: "खेल की सभी ध्वनियाँ चालू या बंद करता है।", ctlSpaceT: "स्पेस बार", ctlSpace: "स्पिन बटन की तरह स्पिन शुरू करता है। सेटिंग्स में बंद किया जा सकता है।", ctlSlamT: "रील पर टैप", ctlSlam: "स्पिन के दौरान रील जल्दी रोकता है।", ctlClose: "खुली विंडो बंद करता है।",
   menu: "मेन्यू", info: "जानकारी", settings: "सेटिंग", setMusic: "संगीत", setSfx: "ध्वनि प्रभाव", setSpace: "स्पेस बार से स्पिन शुरू हो",
   autoRounds: "राउंड की संख्या", autoLoss: "बैलेंस इतना घटने पर रोकें", autoWin: "एक जीत इतनी होने पर रोकें", noLimit: "कोई सीमा नहीं", volatility: "अस्थिरता", volHigh: "ऊंची",
   buyLocked: "एंटे चालू रहने पर बोनस नहीं खरीदा जा सकता। पहले एंटे बंद करें।", hudMult: "गुणक", msgIdle: "खेलने के लिए स्पिन दबाएं", msgGood: "शुभकामनाएं!", msgWin: "आपने {amount} जीता", msgFs: "फ्री स्पिन {i}/{n}", msgAuto: "ऑटोप्ले: {n} राउंड बाकी",
@@ -1188,9 +1231,12 @@ hi: {
   maxText: "अधिकतम जीत दांव की राशि का {max} गुना है: मौजूदा दांव की राशि पर {amount}।",
   maxText2: "जब कोई राउंड इस तक पहुंचता है, तो वह तुरंत खत्म हो जाता है: बचे हुए फ्री स्पिन नहीं खेले जाते और जीत {max}× होती है।",
   pressStart: "जारी रखने के लिए टैप करें",
-  rtpLine: "सैद्धांतिक RTP: {rtp}%"
+  rtpLine: "सैद्धांतिक RTP: {rtp}%",
+  colMode: "मोड",
+  colPrice: "कीमत"
 },
 ar: {
+  secControls: "الأزرار", ctlSpin: "يبدأ دورة بمبلغ الرهان الحالي. أثناء الدوران يوقف البكرات أسرع.", ctlTurbo: "يشغّل الدورات السريعة ويوقفها.", ctlAuto: "يفتح إعدادات اللعب التلقائي: عدد الدورات وحدود الإيقاف. لا يبدأ اللعب التلقائي إلا بعد الضغط على ابدأ. أثناء اللعب التلقائي يوقفه هذا الزر.", ctlBet: "خفض مبلغ الرهان أو رفعه بمستوى واحد.", ctlBetMenu: "يعرض مبلغ الرهان؛ انقر لاختيار أي مستوى من القائمة.", ctlBonus: "يفتح قائمة أوضاع المكافأة. عندما يكون Ante مفعّلًا يوقفه هذا الزر.", ctlMenu: "يفتح القائمة: المعلومات والإعدادات والصوت.", ctlInfo: "يفتح قواعد اللعبة هذه.", ctlSettings: "تشغيل أو إيقاف الموسيقى والمؤثرات الصوتية ومفتاح المسافة.", ctlSound: "يشغّل جميع أصوات اللعبة أو يوقفها.", ctlSpaceT: "مفتاح المسافة", ctlSpace: "يبدأ دورة مثل زر الدوران. يمكن إيقافه من الإعدادات.", ctlSlamT: "النقر على البكرات", ctlSlam: "أثناء الدوران يوقف البكرات أسرع.", ctlClose: "يغلق النافذة المفتوحة.",
   menu: "القائمة", info: "معلومات", settings: "الإعدادات", setMusic: "الموسيقى", setSfx: "المؤثرات الصوتية", setSpace: "مفتاح المسافة يبدأ الدورة",
   autoRounds: "عدد الجولات", autoLoss: "التوقف عند انخفاض الرصيد بمقدار", autoWin: "التوقف عندما يبلغ ربح واحد", noLimit: "بلا حد", volatility: "التقلب", volHigh: "مرتفع",
   buyLocked: "لا يمكن شراء المكافأة ما دام الأنتي مفعّلًا. أوقف الأنتي أولًا.", hudMult: "المضاعِف", msgIdle: "اضغط تدوير للعب", msgGood: "حظًا سعيدًا!", msgWin: "ربحت {amount}", msgFs: "دورة مجانية {i} من {n}", msgAuto: "اللعب التلقائي: بقيت {n} جولات",
@@ -1267,6 +1313,8 @@ ar: {
   maxText: "أقصى ربح هو {max}× مبلغ الرهان: {amount} بمبلغ الرهان الحالي.",
   maxText2: "عندما تبلغه الجولة تنتهي فورًا: لا تُلعب الدورات المجانية المتبقية ويكون الربح {max}×.",
   pressStart: "اضغط للمتابعة",
-  rtpLine: "العائد النظري للاعب (RTP): {rtp}%"
+  rtpLine: "العائد النظري للاعب (RTP): {rtp}%",
+  colMode: "الوضع",
+  colPrice: "السعر"
 }
 };
