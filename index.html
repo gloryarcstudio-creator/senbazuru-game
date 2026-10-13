@@ -34,6 +34,12 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 #transFade.in{opacity:1}
 .decor{position:absolute;top:0;z-index:1;pointer-events:none;opacity:.88;transition:opacity .6s}
 [data-fs] .decor{opacity:0}   /* у фонов фриспинов свои фонари и журавли */
+/* v18: гирлянды качаются вокруг верхнего края, правая — в своём ритме */
+.decor{transform-origin:50% 0;animation:garland 6.5s ease-in-out infinite alternate}
+#decorR{animation-duration:7.7s;animation-delay:-2.3s}
+@keyframes garland{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
+/* v18: слой живого фона (лепестки, светлячки, фольга, журавлики) — под гирляндами, логотипом, полем и панелью */
+#bgFx{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;pointer-events:none}
 #decorL{left:calc(var(--dx)*-1)}
 #decorR{right:calc(var(--dx)*-1)}
 .abs{position:absolute;left:0;top:0;z-index:2;transform:translate(-50%,-50%);white-space:nowrap}
@@ -54,6 +60,8 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 #board .frame{position:absolute;z-index:1;inset:calc(var(--bs)*-.10952);pointer-events:none;background:url("assets/ui/frame_base.webp?v=15") 0 0/100% 100% no-repeat}
 [data-fs="1"] #board .frame{background-image:url("assets/ui/frame_fs.webp?v=15")}
 [data-fs="2"] #board .frame{background-image:url("assets/ui/frame_super.webp?v=15")}
+/* v18: свет по рамке — холст того же размера, что и рамка */
+#board canvas.frameFx{position:absolute;z-index:1;left:calc(var(--bs)*-.10952);top:calc(var(--bs)*-.10952);width:calc(var(--bs)*1.21904);height:calc(var(--bs)*1.21904);pointer-events:none}
 
 /* ---------- таблички: размер задаёт .box, текст внутри считается от него (cqh) ---------- */
 .box{position:relative;container-type:size;min-width:0;filter:drop-shadow(0 .14em .12em rgba(5,8,24,.5))}
@@ -443,7 +451,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 #loader.ready #ldText{opacity:1;color:var(--gold);animation:blink 1.6s ease-in-out infinite}
 #loader.ready .ld-bar{visibility:hidden}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
-@media (prefers-reduced-motion:reduce){.ld-logo,.ld-plank,.cloud,#loader.ready #ldText{animation:none}}
+@media (prefers-reduced-motion:reduce){.ld-logo,.ld-plank,.cloud,#loader.ready #ldText,.decor{animation:none}}
 @media (prefers-reduced-motion:reduce){#bigwinTitle.slam,#bigwinAmount.bump,#winBox.pop .val,#multHud.pop .hv,#menuPop{animation:none}}
 </style>
 <style id="fonts">
@@ -454,6 +462,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 <body>
 <div id="app" data-mode="desk">
   <div id="bg"><video id="bgVideo" muted loop playsinline preload="none" aria-hidden="true" hidden></video></div>
+  <canvas id="bgFx" aria-hidden="true"></canvas>
 
   <div id="logo" class="abs"><img src="assets/ui/logo.webp?v=15" alt="Senbazuru"><span id="demoTag" data-i18n="demo" hidden>Demo</span></div>
 
@@ -462,6 +471,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
   <div id="board" class="abs">
     <canvas id="reels"></canvas>
     <i class="frame"></i>
+    <canvas class="frameFx" aria-hidden="true"></canvas>
   </div>
 
   <div id="fsBox" class="abs" hidden><div class="tag"><span class="lbl" id="fsLbl" data-fit>Free spins</span><span class="val" id="fsVal" data-fit>0 / 0</span></div></div>
@@ -2211,6 +2221,146 @@ async function runReplay() {
   $('btnReplay').textContent = t('rAgain'); $('replayCard').hidden = false; queueFit(); $('btnReplay').focus();
 }
 
+/* v18: живые рамка и фон. Всё кодом, без CSS filter (Safari) и без новой графики.
+   Рамка: раз в ~8 с по периметру пробегает золотая искра (маска — плотная часть самой рамки), в углах вспыхивают искры;
+          при показе выигрыша искр две и они бегут без пауз, при ожидании скаттера рамка мягко светится золотом.
+   Фон:   базовый режим — бумажные лепестки сакуры и (если не играет фон-видео) белые журавлики в небе;
+          фриспины — светлячки у фонарей; супербонус — золотая фольга. Гирлянды по краям качаются (CSS).
+   Слой фона лежит под гирляндами, логотипом, полем и панелью — интерфейс не перекрывает. */
+const SCENE = { on: IDLE.on, fps: 30, last: 0, parts: [], mode: '', cranes: [], nextCrane: 0, w: 0, h: 0, dpr: 1, fw: 0 };
+const bgFx = $('bgFx'), bgCtx = bgFx.getContext('2d'), frFx = boardEl.querySelector('.frameFx'), frCtx = frFx.getContext('2d');
+const FRAME_SRC = { base: 'assets/ui/frame_base.webp', fs: 'assets/ui/frame_fs.webp', super: 'assets/ui/frame_super.webp' }, FRAME_IMG = {};
+const sceneKey = () => app.dataset.fs === '2' ? 'super' : app.dataset.fs === '1' ? 'fs' : 'base';
+function frameImg(k) {
+  let im = FRAME_IMG[k]; if (!im) { im = FRAME_IMG[k] = new Image(); im.decoding = 'async'; im.src = FRAME_SRC[k]; }
+  return im.complete && im.naturalWidth ? im : null;
+}
+const rnd = (a, b) => a + Math.random() * (b - a);
+const PALETTE = { base: ['#f6c9d2', '#f4a6bf', '#fbe3e8', '#f4ead5', '#eea0b8'], super: ['#e9b63c', '#f3d27a', '#d9a227', '#fbefc4'] };
+function spawnPart(k, top) {
+  const { w, h } = SCENE, m = Math.min(w, h);
+  if (k === 'fs') return { k, x: rnd(0, w), y: top ? rnd(0, h) : h + 10, vx: rnd(-8, 8), vy: -rnd(6, 16), r: m * rnd(0.006, 0.011), ph: rnd(0, TAU), bl: rnd(1.6, 3.4) };
+  const big = k === 'base' ? rnd(0.012, 0.022) : rnd(0.008, 0.014);
+  return { k, x: rnd(-0.05, 1.05) * w, y: top ? rnd(-0.1, 1) * h : -m * 0.05, vx: rnd(-6, 10), vy: m * rnd(0.035, 0.07), r: m * big, rot: rnd(0, TAU), vr: rnd(-0.8, 0.8),
+    ph: rnd(0, TAU), fl: rnd(1.2, 2.6), sw: m * rnd(0.01, 0.03), c: PALETTE[k][(Math.random() * PALETTE[k].length) | 0] };
+}
+function partCount(k) {
+  const mode = app.dataset.mode, n = k === 'fs' ? 20 : mode === 'desk' ? 18 : 12;
+  return Math.round(n * (LITE ? 0.6 : 1));
+}
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16), c = s => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * f))); return 'rgb(' + c(16) + ',' + c(8) + ',' + c(0) + ')'; }
+function drawPetal(p, flip) {   // лепесток сакуры с надрезом, сложенный пополам: две половины разного тона
+  const r = p.r, c = bgCtx;
+  c.beginPath(); c.moveTo(0, r); c.bezierCurveTo(r * 0.95, r * 0.35, r * 0.8, -r * 0.7, r * 0.2, -r); c.lineTo(0, -r * 0.76); c.lineTo(-r * 0.2, -r);
+  c.bezierCurveTo(-r * 0.8, -r * 0.7, -r * 0.95, r * 0.35, 0, r); c.closePath();
+  c.fillStyle = p.c; c.fill(); c.save(); c.clip(); c.fillStyle = shade(p.c, 0.84); c.fillRect(flip > 0 ? 0 : -r, -r, r, 2 * r); c.restore();
+}
+function drawLeaf(p, flip) {   // кусочек золотой фольги: неровный четырёхугольник с бликом
+  const r = p.r, c = bgCtx;
+  c.beginPath(); c.moveTo(-r, -r * 0.5); c.lineTo(r * 0.7, -r * 0.8); c.lineTo(r, r * 0.6); c.lineTo(-r * 0.6, r * 0.8); c.closePath();
+  c.fillStyle = flip > 0 ? p.c : shade(p.c, 0.78); c.fill();
+  c.globalAlpha *= 0.6; c.fillStyle = '#fff6d8'; c.beginPath(); c.moveTo(-r * 0.6, -r * 0.45); c.lineTo(r * 0.2, -r * 0.62); c.lineTo(-r * 0.1, -r * 0.2); c.fill();
+}
+function drawFirefly(p, t) {
+  const a = 0.3 + 0.7 * Math.max(0, Math.sin(TAU * t / p.bl + p.ph)), c = bgCtx, R2 = p.r * 4.5;
+  const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, R2);
+  g.addColorStop(0, 'rgba(255,244,190,' + a.toFixed(3) + ')'); g.addColorStop(0.18, 'rgba(255,220,120,' + (0.8 * a).toFixed(3) + ')'); g.addColorStop(0.45, 'rgba(255,196,90,' + (0.25 * a).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,190,90,0)');
+  c.fillStyle = g; c.fillRect(p.x - R2, p.y - R2, 2 * R2, 2 * R2);
+}
+/* белый бумажный журавлик в небе: тело, шея, хвост и два крыла-треугольника, крылья машут */
+function drawCrane(cr, t) {
+  const c = bgCtx, s = cr.s, f = Math.sin(TAU * t / 0.9 + cr.ph), wy = -0.85 * f, wx = -0.1;
+  c.save(); c.translate(cr.x, cr.y + Math.sin(TAU * t / 2.4 + cr.ph) * s * 0.15); c.scale(cr.dir * s, s);
+  const poly = (pts, fill) => { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); c.fillStyle = fill; c.fill(); };
+  poly([-0.1, 0, 0.25, 0, wx + 0.15, wy * 0.9 - 0.05], '#cfc3a8');                             // дальнее крыло
+  poly([-0.35, 0, -0.85, -0.42, -0.78, -0.38, -0.15, 0.06], '#e8dcc2');                         // хвост
+  poly([0.3, 0, 0.72, -0.46, 0.8, -0.42, 0.4, 0.07], '#e8dcc2');                               // шея
+  poly([0.72, -0.46, 0.95, -0.36, 0.8, -0.42], '#e8dcc2');                                     // голова
+  poly([-0.5, 0, 0.45, 0, 0.02, 0.24], '#f6efe0');                                             // тело
+  poly([-0.2, 0.02, 0.2, 0.02, wx, wy], '#fbf6ea');                                            // ближнее крыло
+  c.restore();
+}
+function updateBgFx(t, dt) {
+  const W = bgFx.clientWidth, H = bgFx.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.25 : 1.5);
+  if (!W || !H) return;
+  if (W !== SCENE.w || H !== SCENE.h || dpr !== SCENE.dpr) { SCENE.w = W; SCENE.h = H; SCENE.dpr = dpr; bgFx.width = Math.round(W * dpr); bgFx.height = Math.round(H * dpr); SCENE.mode = ''; }
+  const k = sceneKey();
+  if (k !== SCENE.mode) { SCENE.mode = k; SCENE.parts = []; SCENE.cranes = []; for (let i = 0; i < partCount(k); i++) SCENE.parts.push(spawnPart(k, true)); SCENE.nextCrane = t + rnd(2, 5); }
+  const c = bgCtx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  for (let i = 0; i < SCENE.parts.length; i++) {
+    const p = SCENE.parts[i];
+    if (p.k === 'fs') {
+      p.x += (p.vx + Math.sin(t * 0.7 + p.ph) * 10) * dt; p.y += p.vy * dt;
+      if (p.y < -20 || p.x < -20 || p.x > W + 20) { SCENE.parts[i] = spawnPart(k, false); continue; }
+      drawFirefly(p, t); continue;
+    }
+    p.x += (p.vx + Math.cos(t / p.fl * 2 + p.ph) * p.sw) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+    if (p.y > H + p.r * 2) { SCENE.parts[i] = spawnPart(k, false); continue; }
+    const flip = Math.cos(TAU * t / p.fl + p.ph);
+    c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(0.25 + 0.75 * Math.abs(flip), 1); c.globalAlpha = 0.92;
+    if (p.k === 'base') drawPetal(p, flip); else drawLeaf(p, flip);
+    c.restore();
+  }
+  // журавлики — только в базовом режиме и только когда не играет фон-видео (в нём свои журавли)
+  const vid = $('bgVideo'), videoOn = !vid.hidden && vid.classList.contains('on');
+  if (k === 'base' && !videoOn && t >= SCENE.nextCrane) {
+    const dir = Math.random() < 0.5 ? 1 : -1, s = Math.min(W, H) * rnd(0.022, 0.032), n = Math.random() < 0.35 ? 2 : 1, y = H * rnd(0.06, app.dataset.mode === 'portrait' ? 0.14 : 0.24);
+    for (let i = 0; i < n; i++) SCENE.cranes.push({ x: dir > 0 ? -s * (2 + i * 2.5) : W + s * (2 + i * 2.5), y: y + i * s * 0.9, s: s * (1 - i * 0.2), dir, v: W / rnd(11, 16), ph: rnd(0, TAU) });
+    SCENE.nextCrane = t + rnd(9, 16);
+  }
+  for (let i = SCENE.cranes.length - 1; i >= 0; i--) {
+    const cr = SCENE.cranes[i]; cr.x += cr.dir * cr.v * dt; cr.y -= cr.v * 0.04 * dt;
+    if ((cr.dir > 0 && cr.x > W + cr.s * 2) || (cr.dir < 0 && cr.x < -cr.s * 2) || k !== 'base') { SCENE.cranes.splice(i, 1); continue; }
+    c.globalAlpha = 0.9; drawCrane(cr, t); c.globalAlpha = 1;
+  }
+}
+/* маска рамки: только плотная часть картинки (альфа > 180), чтобы свет не растекался по полупрозрачной тени внутри окна */
+const FRAME_MASK = {};
+function frameMask(k, px) {
+  const m = FRAME_MASK[k]; if (m && m.width === px) return m;
+  const im = frameImg(k); if (!im) return null;
+  const c = document.createElement('canvas'); c.width = c.height = px; const x = c.getContext('2d'); x.drawImage(im, 0, 0, px, px);
+  try { const d = x.getImageData(0, 0, px, px), a = d.data; for (let i = 3; i < a.length; i += 4) a[i] = a[i] > 180 ? 255 : 0; x.putImageData(d, 0, 0); } catch (e) { /* без маски-порога — по исходной альфе */ }
+  return (FRAME_MASK[k] = c);
+}
+/* рамка: в покое раз в ~8 с по периметру пробегает золотая искра и зажигает искры в углах;
+   во время показа выигрыша искр две и они бегут без пауз; при ожидании скаттера рамка мягко светится золотом */
+function updateFrameFx(t) {
+  const W = frFx.clientWidth; if (!W) return;
+  const px = Math.min(Math.round(W * Math.min(window.devicePixelRatio || 1, 2)), 1024);
+  if (frFx.width !== px) { frFx.width = frFx.height = px; }
+  const c = frCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, px, px);
+  const mask = frameMask(sceneKey(), px); if (!mask) return;
+  const win = Show.active, tease = R.reels.some(r => r.tease && r.state !== 'idle' && r.state !== 'wait');
+  const ins = px * 0.045, L = px - 2 * ins, per = 4 * L;
+  const at = s => { s = ((s % per) + per) % per; return s < L ? [ins + s, ins] : s < 2 * L ? [px - ins, ins + s - L] : s < 3 * L ? [px - ins - (s - 2 * L), px - ins] : [ins, px - ins - (s - 3 * L)]; };
+  const comet = (s0, strength) => {
+    for (let k = 0; k < 10; k++) {
+      const [x, y] = at(s0 - k * px * 0.03), rad = px * (0.06 - k * 0.004), a = strength * (1 - k / 10);
+      const g = c.createRadialGradient(x, y, 0, x, y, rad);
+      g.addColorStop(0, 'rgba(255,246,205,' + a.toFixed(3) + ')'); g.addColorStop(0.45, 'rgba(255,214,110,' + (a * 0.6).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,200,90,0)');
+      c.fillStyle = g; c.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+  };
+  const period = 8, run = 2.6, q = t % period, idleRun = !win && q < run;
+  let lit = false;
+  if (win) { const s0 = (t / 2.4 % 1) * per; comet(s0, 0.95); comet(s0 + per / 2, 0.95); lit = true; }
+  else if (idleRun) { const k = q / run; comet(ease(k) * per * 1.02, 0.9 * Math.min(1, Math.sin(Math.PI * k) * 2.5)); lit = true; }
+  if (tease) { c.fillStyle = 'rgba(255,205,96,' + (0.24 + 0.16 * Math.sin(t * 9)).toFixed(3) + ')'; c.fillRect(0, 0, px, px); lit = true; }
+  if (lit) { c.globalCompositeOperation = 'destination-in'; c.drawImage(mask, 0, 0); c.globalCompositeOperation = 'source-over'; }
+  if (!win) [[1, 0], [1, 1], [0, 1], [0, 0]].forEach(([cx, cy], i) => {   // искры в углах — когда искра проходит угол (по часовой, с верхнего левого)
+    const f = (i + 1) / 4.08, tc = run * (0.5 - Math.sin(Math.asin(1 - 2 * f) / 3)), k = (q - tc + 0.05) / 0.5; if (k <= 0 || k >= 1) return;
+    const x = cx ? px - ins : ins, y = cy ? px - ins : ins, r = px * 0.045 * Math.sin(Math.PI * k);
+    c.fillStyle = '#fff4cf'; c.beginPath(); c.moveTo(x, y - r); c.quadraticCurveTo(x, y, x + r, y); c.quadraticCurveTo(x, y, x, y + r); c.quadraticCurveTo(x, y, x - r, y); c.quadraticCurveTo(x, y, x, y - r); c.fill();
+  });
+}
+function updateScene(t) {
+  if (!SCENE.on || !G.ready || document.hidden) return;
+  if (t - SCENE.last < 1 / SCENE.fps - 0.004) return;
+  const step = Math.min(0.1, t - (SCENE.last || t)); SCENE.last = t;
+  updateBgFx(t, step); updateFrameFx(t);
+}
+
 /* ================= запуск ================= */
 let lastT = now();
 function frame() {
@@ -2218,7 +2368,7 @@ function frame() {
   updateReels(dt, tt); updateShow(tt);
   if (IDLE.on && G.ready && !document.hidden && tt - IDLE.last >= 1 / IDLE.fps - 0.004) { IDLE.last = tt; R.dirty = true; }   // idle-анимации символов, 30 к/с
   if (R.dirty) { R.dirty = false; drawBoard(tt); }
-  updateFx(dt, tt);
+  updateFx(dt, tt); updateScene(tt);
   requestAnimationFrame(frame);
 }
 
@@ -2355,7 +2505,7 @@ window.__game = {
     lang, social: G.social, currency: G.currency, jur: Object.assign({}, G.jur), replay: !!G.replay, turbo: G.turbo, lite: LITE, sound: G.sound, space: G.space, log: G.log.slice() }; },
   get tease() { return R.reels.map(r => !!r.tease); },
   board(cols) { cols.forEach((col, c) => { const r = R.reels[c], b = Math.round(r.pos); col.forEach((n, k) => { r.buf[(((b + CONFIG.rows - 1 - k) % BUF) + BUF) % BUF] = n; }); }); R.dirty = true; },   // показать заданное поле (контакт-лист анимаций)
-  idle(on) { IDLE.on = !!on; R.dirty = true; },
+  idle(on) { IDLE.on = SCENE.on = !!on; R.dirty = true; if (!on) { bgCtx.setTransform(1, 0, 0, 1, 0, 0); bgCtx.clearRect(0, 0, bgFx.width, bgFx.height); frCtx.setTransform(1, 0, 0, 1, 0, 0); frCtx.clearRect(0, 0, frFx.width, frFx.height); } },
   force(seed) { DEMO.forced = seed >>> 0; }, queue(seeds) { DEMO.queue = seeds.map(s => s >>> 0); }, spin, config: CONFIG, paytable: PAYTABLE,
   t, money, readWins: ev => readWins(ev, false).map(w => ({ money: w.money, noLabel: w.noLabel, cells: w.cells.length })), retext: () => { applyTexts(); updateButtons(); }, dict: () => Object.assign({}, I18N.en, DICT), legal: LEGAL
 };
