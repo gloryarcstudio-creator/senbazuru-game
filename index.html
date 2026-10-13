@@ -713,6 +713,7 @@ const ASSETS = {
   bgSuper: { land: 'assets/bg/bg_super_land.webp?v=15', port: 'assets/bg/bg_super_port.webp?v=15', landLite: 'assets/bg/bg_super_land_s.webp?v=15', portLite: 'assets/bg/bg_super_port_s.webp?v=15' },
   // большие декорации по краям и видео — только для больших экранов (см. LITE)
   decor: { left: 'assets/bg/decor_left.webp?v=15', right: 'assets/bg/decor_right.webp?v=15' },
+  hero: 'assets/ui/hero_crane.webp',   // персонаж фона (v19)
   video: [],
   intro: { webm: 'assets/intro/studio.webm?v=15', mp4: 'assets/intro/studio.mp4?v=15', studio: 'GLORYARC Studio' },   // интро студии перед игрой, без звука
   music: { base: 'assets/music/music_base.mp3?v=15', fs: 'assets/music/music_fs.mp3?v=15', super: 'assets/music/music_super.mp3?v=15', bigwin: 'assets/music/music_bigwin.mp3?v=15' },   // петли по режимам, см. Snd
@@ -1036,6 +1037,7 @@ async function loadAssets(onProgress) {
   for (const k of ['landFx', 'antic', 'bigwinBg']) list.push(['anim_' + k, ASSETS[k].src]);
   const port = innerHeight > innerWidth * 1.05;
   list.push(['bg', LITE ? (port ? ASSETS.bg.portLite : ASSETS.bg.landLite) : (port ? ASSETS.bg.port : ASSETS.bg.land)]);
+  list.push(['hero', ASSETS.hero]);
   if (!LITE) { list.push(['decorL', ASSETS.decor.left], ['decorR', ASSETS.decor.right]); ASSETS.video.forEach((src, i) => list.push(['video_' + i, src])); }
   let done = 0;
   await Promise.all(list.map(async ([key, src]) => { IMG[key] = await loadImage(src); onProgress(++done / list.length); }));
@@ -1063,6 +1065,7 @@ function ensure(r, upTo) { while (r.gen < upTo) { r.gen++; r.buf[((r.gen % BUF) 
 const backOut = x => { const c = 1.1, y = x - 1; return 1 + (c + 1) * y * y * y + c * y * y; }; // производная в нуле = c + 3
 
 function startReels() {
+  Hero.react('spin');
   const t = now(), S = SPEED();
   R.reels.forEach((r, i) => { r.state = 'wait'; r.startAt = t + i * S.stagger; r.stopAt = Infinity; r.final = null; r.v = 0; r.tease = false; });
   R.mults = new Map(); R.landFx = new Map(); R.dirty = true; G.slam = false;
@@ -1085,7 +1088,7 @@ function landedSound(r) {
   if (!r.final) return;
   const before = R.reels.filter(q => q.i < r.i && q.final).reduce((n, q) => n + q.final.filter(x => x === 'S').length, 0);
   r.final.forEach((name, row) => {
-    if (name === 'S') { Snd.scatter(before + 1); R.landFx.set(r.i + ',' + row, now()); }
+    if (name === 'S') { Snd.scatter(before + 1); R.landFx.set(r.i + ',' + row, now()); Hero.react('scatter'); }
     else if (name === 'W' && !R.sticky.has(r.i + ',' + row)) Snd.wild(R.mults.get(r.i + ',' + row) || 1, false);
   });
 }
@@ -1136,6 +1139,7 @@ const holdShow = ms => new Promise(res => { const t0 = now(); (function chk() { 
 async function playWins(wins, base) {
   const list = wins.filter(w => w.positions.length > 1);
   Object.assign(Show, { active: true, wins: list, all: new Set() }); list.forEach(w => w.cells.forEach(k => Show.all.add(k)));
+  const xb = list.reduce((a, w) => a + w.money, 0) / (G.bet || 1); if (list.length) Hero.react('win', xb >= 10 ? 3 : xb >= 3 ? 2 : 1);
   let sum = base;
   for (let i = 0; i < list.length && !G.slam; i++) {
     Object.assign(Show, { phase: 'one', idx: i, t0: now(), cells: new Set(list[i].cells) }); R.dirty = true;
@@ -2029,7 +2033,7 @@ async function winScene(amount, o) {
   const el = $('bigwin'), am = $('bigwinAmount'), bet = G.bet || 1;
   const final = o.total ? 5 : o.tier, thresholds = o.total ? [] : CONFIG.winTiers.map(x => x * bet).slice(0, Math.min(final, 4) + 1).concat(final >= 4 ? [amount] : []);
   let tier = o.total ? 5 : 0;
-  am.hidden = false; am.textContent = money(amount, 'win'); el.hidden = false;
+  am.hidden = false; am.textContent = money(amount, 'win'); el.hidden = false; Hero.react('bigwin');
   const level = o.total ? clamp(tierOf(amount / bet), 0, 4) : 0;
   setPlaque(o.total ? 'total' : 'nice', true, o.total && level >= 2); am.textContent = money(0, 'win'); tierFx(tier, level);
   let taps = 0, closed; const closeP = new Promise(r => { closed = r; });
@@ -2093,7 +2097,7 @@ async function presentRound(round) {
       } else if (P.bonus) await hold(160);
       P.total = ev.amount;
     } else if (ev.type === 'freeSpinTrigger') {
-      P.bonus = true; showCells(readPositions(ev.positions, P.padded)); Snd.event('bonus_trigger'); await hold(1000);
+      P.bonus = true; showCells(readPositions(ev.positions, P.padded)); Snd.event('bonus_trigger'); Hero.react('bonus'); await hold(1000);
       Snd.event(ev.super ? 'super_intro' : 'fs_intro');
       await transition(ev.super ? 'super' : 'fs', () => {
         clearWins(); enterFs(ev.totalFs, !!ev.super); popFs(); confetti(1.2); if (ev.startWilds) Snd.sfx('super_wilds', { when: 0.3 });
@@ -2149,7 +2153,7 @@ async function spin(buyMode) {
   }
   if (res.balance) setBalance(res.balance.amount);
   const rest = SPEED().min - (now() - t0); if (rest > 0 && !G.slam) await wait(rest * 1000);
-  const paid = await finishRound(res.round, mode, cost, bet);
+  const paid = await finishRound(res.round, mode, cost, bet); if (!(paid > 0)) Hero.react('miss');
   const left = G.jur.minimumRoundDuration / 1000 - (now() - t0); if (left > 0) await wait(left * 1000);   // минимальная длительность раунда
   G.busy = false; G.canSlam = false;
   if (G.auto > 0) {
@@ -2313,6 +2317,7 @@ function updateBgFx(t, dt) {
     if ((cr.dir > 0 && cr.x > W + cr.s * 2) || (cr.dir < 0 && cr.x < -cr.s * 2) || k !== 'base') { SCENE.cranes.splice(i, 1); continue; }
     c.globalAlpha = 0.9; drawCrane(cr, t); c.globalAlpha = 1;
   }
+  drawHero(t, dt, W, H);
 }
 /* маска рамки: только плотная часть картинки (альфа > 180), чтобы свет не растекался по полупрозрачной тени внутри окна */
 const FRAME_MASK = {};
@@ -2353,6 +2358,99 @@ function updateFrameFx(t) {
     const x = cx ? px - ins : ins, y = cy ? px - ins : ins, r = px * 0.045 * Math.sin(Math.PI * k);
     c.fillStyle = '#fff4cf'; c.beginPath(); c.moveTo(x, y - r); c.quadraticCurveTo(x, y, x + r, y); c.quadraticCurveTo(x, y, x, y + r); c.quadraticCurveTo(x, y, x - r, y); c.quadraticCurveTo(x, y, x, y - r); c.fill();
   });
+}
+/* v19: персонаж фона — большой бумажный журавль с обложки. Картинка одна, движения кодом: сетка полос (крыло, кивок головой),
+   подскоки, наклоны, поворот «бумажным листом», золотое свечение и искры. Реакции приходят из игры через Hero.react(...).
+   Место — свободная зона рядом с полем: справа от рамки под HUD (альбом) или между полем и панелью (портрет). */
+const Hero = { act: null, last: 0, box: null, boxAt: 0, sparks: [] };
+const HERO_ACTS = {   // длительность реакции, с
+  spin: 0.5, scatter: 0.7, win: 1.3, winBig: 1.9, bigwin: 3.2, bonus: 2.4, miss: 1.1
+};
+Hero.react = (name, level) => {
+  if (!SCENE.on) return;
+  const t = now(); Hero.last = t;
+  if (Hero.act && Hero.act.name === 'bigwin' && name !== 'bigwin' && t - Hero.act.t0 < Hero.act.dur) return;   // не перебивать праздник
+  if (name === 'win' && level >= 2) name = 'winBig';
+  if (HERO_ACTS[name]) Hero.act = { name, t0: t, dur: HERO_ACTS[name], level: level || 0 };
+  const b = Hero.box; if (!b) return;
+  const n = name === 'bigwin' ? 14 : name === 'bonus' ? 12 : name === 'winBig' ? 8 : name === 'win' ? 4 : 0;
+  for (let i = 0; i < n; i++) { const a = rnd(0, TAU), d = rnd(0.35, 0.7) * b.w; Hero.sparks.push({ x: b.cx + Math.cos(a) * d * 0.4, y: b.cy + Math.sin(a) * d * 0.3, vx: Math.cos(a) * d * 0.6, vy: Math.sin(a) * d * 0.5 - b.h * 0.3, t0: t + i * 0.04, life: rnd(0.7, 1.2), r: b.w * rnd(0.025, 0.045) }); }
+};
+function heroBox(W, H) {
+  const im = IMG.hero; if (!im) return null;
+  const a = app.getBoundingClientRect(), fr = frFx.getBoundingClientRect(), pt = $('panel').getBoundingClientRect().top - a.top, asp = im.width / im.height;
+  const L = fr.left - a.left, Rt = fr.right - a.left, T = fr.top - a.top, B = fr.bottom - a.top;
+  let x0, x1, y0, y1, side;
+  if (app.dataset.mode === 'portrait') { x0 = W * 0.04; x1 = W * 0.96; y0 = B + H * 0.004; y1 = pt - H * 0.004; side = 'below'; }
+  else {
+    const hud = $('multHud').getBoundingClientRect(), dr = $('decorR'), dR = dr && !dr.hidden ? dr.getBoundingClientRect().left - a.left + dr.offsetWidth * 0.08 : W - W * 0.015;   // не залезать под гирлянду
+    x0 = Rt + W * 0.012; x1 = dR; y0 = Math.max(hud.bottom - a.top + H * 0.01, T); y1 = pt - H * 0.015; side = 'right';
+  }
+  const rw = x1 - x0, rh = y1 - y0; if (rw <= 0 || rh <= 0) return null;
+  let h = Math.min(rh * 0.88, (rw * 0.92) / asp, H * 0.42); const w = h * asp;
+  if (h < Math.max(56, H * (side === 'below' ? 0.09 : 0.14))) return null;   // слишком мелко — персонажа не показываем
+  const cx = side === 'below' ? x1 - w * 0.52 : x0 + rw / 2, cy = y0 + rh * (side === 'below' ? 0.5 : 0.55);
+  return { cx, cy, w, h, face: cx > (L + Rt) / 2 ? -1 : 1 };   // картинка смотрит вправо; к полю — зеркалим
+}
+/* сетка полос по картинке: смещение по y в каждой точке (u, v) — крыло (левый верх) и голова (правый верх) */
+function heroMesh(im, w, h, flap, nod, cols, rows) {
+  const c = bgCtx, IW = im.width, IH = im.height;
+  const d = (u, v) => flap * h * 0.16 * Math.pow(Math.max(0, (0.52 - u) / 0.52), 1.2) * Math.pow(Math.max(0, (0.62 - v) / 0.62), 1.1)
+    + nod * h * 0.12 * Math.pow(Math.max(0, (u - 0.6) / 0.4), 1.4) * Math.max(0, (0.6 - v) / 0.6);
+  for (let i = 0; i < cols; i++) {
+    const u0 = i / cols, u1 = (i + 1) / cols, uc = (u0 + u1) / 2, sx = IW * u0, sw = IW / cols, dx = -w / 2 + w * u0, dw = w / cols + 0.7;
+    for (let j = 0; j < rows; j++) {
+      const v0 = j / rows, v1 = (j + 1) / rows, y0 = -h / 2 + h * v0 + d(uc, v0), y1 = -h / 2 + h * v1 + d(uc, v1);
+      c.drawImage(im, sx, IH * v0, sw, IH / rows, dx, y0, dw, y1 - y0 + 0.7);
+    }
+  }
+}
+function drawHero(t, dt, W, H) {
+  if (!IMG.hero) return;
+  if (!Hero.last) Hero.last = t;
+  if (!Hero.box || t - Hero.boxAt > 0.5) { Hero.box = heroBox(W, H); Hero.boxAt = t; }
+  const b = Hero.box; if (!b) return;
+  const c = bgCtx, im = IMG.hero;
+  const spinning = R.reels.some(r => r.state !== 'idle'), tease = R.reels.some(r => r.tease && r.state !== 'idle' && r.state !== 'wait');
+  const doze = !spinning && !Show.active && t - Hero.last > 25;
+  // базовая поза: парит; во время вращения смотрит на поле; при ожидании скаттера — напряжённо дрожит
+  let y = Math.sin(TAU * t / 2.6) * b.h * 0.03, x = 0, rot = 0.03 * Math.sin(TAU * t / 3.4), sx = 1, sy = 1 + 0.012 * Math.sin(TAU * t / 2.6 + 1);
+  let flap = 0.22 * Math.sin(TAU * t / 1.9), nod = Math.max(0, Math.sin(TAU * t / 6.5)) ** 8 * 0.9, glow = 0;
+  if (doze) { flap = -0.15; nod = 0.55 + 0.35 * Math.sin(TAU * t / 3.2); y += b.h * 0.02; sy *= 0.97; }
+  if (spinning) { rot += 0.07; flap = 0.35 * Math.sin(TAU * t / 0.7); nod = 0.25; }
+  if (tease) { rot += 0.05; x += Math.sin(t * 43) * b.w * 0.006; flap = 0.6 * Math.sin(TAU * t / 0.28); glow = 0.55 + 0.25 * Math.sin(t * 9); }
+  const A = Hero.act;
+  if (A) {
+    const k = (t - A.t0) / A.dur;
+    if (k >= 1) Hero.act = null;
+    else {
+      const s = Math.sin(Math.PI * k);
+      switch (A.name) {
+        case 'spin': flap = 0.8 * Math.sin(TAU * k * 1.5); y -= b.h * 0.04 * s; break;   // взмах «поехали»
+        case 'scatter': nod = 1.1 * Math.sin(TAU * k) * (1 - k); rot += 0.06 * s; y -= b.h * 0.03 * s; glow = Math.max(glow, 0.5 * s); break;   // кивает фонарю
+        case 'win': y -= b.h * 0.13 * Math.sin(Math.PI * Math.min(1, k * 1.6)); flap = Math.sin(TAU * k * 3); sy *= 1 + 0.06 * Math.sin(TAU * k * 2); glow = Math.max(glow, 0.4 * s); break;
+        case 'winBig': y -= b.h * 0.2 * Math.sin(Math.PI * Math.min(1, k * 1.3)); flap = Math.sin(TAU * k * 4.5); rot += -0.08 * s; glow = Math.max(glow, 0.7 * s); break;
+        case 'bigwin': y -= b.h * 0.18 * Math.min(1, k * 5) * (1 - Math.max(0, k - 0.85) / 0.15); flap = Math.sin(TAU * t / 0.32); sx = Math.cos(TAU * ease(Math.min(1, k * 1.6))); glow = Math.max(glow, 0.9); break;   // поворот бумажным листом
+        case 'bonus': y -= b.h * 0.3 * s; sx = Math.cos(TAU * 2 * ease(k)); flap = Math.sin(TAU * t / 0.3); rot += 0.1 * s; glow = Math.max(glow, s); break;
+        case 'miss': nod = 0.9 * s; flap = -0.35 * s; y += b.h * 0.035 * s; rot -= 0.04 * s; sy *= 1 - 0.03 * s; break;   // поник
+      }
+    }
+  }
+  if (glow > 0) {
+    const g = c.createRadialGradient(b.cx, b.cy + y, 0, b.cx, b.cy + y, b.w * 0.62);
+    g.addColorStop(0, 'rgba(255,214,120,' + (0.45 * glow).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,190,80,0)');
+    c.fillStyle = g; c.fillRect(b.cx - b.w, b.cy + y - b.w, b.w * 2, b.w * 2);
+  }
+  c.save(); c.translate(b.cx + x, b.cy + y); c.rotate(rot * b.face); c.scale(b.face * (Math.abs(sx) < 0.06 ? 0.06 * Math.sign(sx || 1) : sx), sy);
+  const lite = LITE || app.dataset.mode !== 'desk';
+  heroMesh(im, b.w, b.h, flap, nod, lite ? 12 : 18, lite ? 12 : 16);
+  c.restore();
+  for (let i = Hero.sparks.length - 1; i >= 0; i--) {   // искры реакций
+    const p = Hero.sparks[i], age = t - p.t0; if (age < 0) continue;
+    const k = age / p.life; if (k >= 1) { Hero.sparks.splice(i, 1); continue; }
+    const px = p.x + p.vx * age, py = p.y + p.vy * age + b.h * 0.5 * age * age, r = p.r * Math.sin(Math.PI * k);
+    c.fillStyle = '#ffe9a6'; c.globalAlpha = 1 - k * 0.6; c.beginPath(); c.moveTo(px, py - r); c.quadraticCurveTo(px, py, px + r, py); c.quadraticCurveTo(px, py, px, py + r); c.quadraticCurveTo(px, py, px - r, py); c.quadraticCurveTo(px, py, px, py - r); c.fill(); c.globalAlpha = 1;
+  }
 }
 function updateScene(t) {
   if (!SCENE.on || !G.ready || document.hidden) return;
@@ -2505,6 +2603,8 @@ window.__game = {
     lang, social: G.social, currency: G.currency, jur: Object.assign({}, G.jur), replay: !!G.replay, turbo: G.turbo, lite: LITE, sound: G.sound, space: G.space, log: G.log.slice() }; },
   get tease() { return R.reels.map(r => !!r.tease); },
   board(cols) { cols.forEach((col, c) => { const r = R.reels[c], b = Math.round(r.pos); col.forEach((n, k) => { r.buf[(((b + CONFIG.rows - 1 - k) % BUF) + BUF) % BUF] = n; }); }); R.dirty = true; },   // показать заданное поле (контакт-лист анимаций)
+  hero: (name, level) => Hero.react(name, level),   // реакция персонажа (контакт-лист)
+  get heroBox() { return Hero.box && Object.assign({}, Hero.box); },
   idle(on) { IDLE.on = SCENE.on = !!on; R.dirty = true; if (!on) { bgCtx.setTransform(1, 0, 0, 1, 0, 0); bgCtx.clearRect(0, 0, bgFx.width, bgFx.height); frCtx.setTransform(1, 0, 0, 1, 0, 0); frCtx.clearRect(0, 0, frFx.width, frFx.height); } },
   force(seed) { DEMO.forced = seed >>> 0; }, queue(seeds) { DEMO.queue = seeds.map(s => s >>> 0); }, spin, config: CONFIG, paytable: PAYTABLE,
   t, money, readWins: ev => readWins(ev, false).map(w => ({ money: w.money, noLabel: w.noLabel, cells: w.cells.length })), retext: () => { applyTexts(); updateButtons(); }, dict: () => Object.assign({}, I18N.en, DICT), legal: LEGAL
