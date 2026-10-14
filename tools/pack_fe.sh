@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Упаковка сборки в ДВА zip-архива, каждый меньше лимита (по умолчанию 30 МБ):
-#   part1 — всё, кроме assets/anim и assets/music
-#   part2 — assets/anim + assets/music
+#   part1 — всё, кроме assets/anim, assets/music и assets/video
+#   part2 — assets/anim + assets/music + assets/video
 # Оба архива распаковываются в одну и ту же папку и вместе дают полную сборку.
 #
 #   tools/pack_fe.sh [папка_сборки=build] [папка_архивов=dist]
@@ -27,10 +27,11 @@ P2="$OUT/${NAME}_v${V}_part2.zip"
 rm -f "$OUT/${NAME}"_v*_part1.zip "$OUT/${NAME}"_v*_part2.zip
 
 cd "$BUILD"
-zip -r -X -q "$P1" . -x 'assets/anim/*' -x 'assets/music/*' -x '*.DS_Store' -x '__MACOSX/*'
+zip -r -X -q "$P1" . -x 'assets/anim/*' -x 'assets/music/*' -x 'assets/video/*' -x '*.DS_Store' -x '__MACOSX/*'
 
 HEAVY=()
 [ -d assets/anim ] && HEAVY+=(assets/anim)
+[ -d assets/video ] && HEAVY+=(assets/video)
 [ -d assets/music ] && HEAVY+=(assets/music)
 if [ "${#HEAVY[@]}" -eq 0 ]; then
   echo "В сборке нет assets/anim и assets/music — part2 не из чего собирать" >&2; exit 1
