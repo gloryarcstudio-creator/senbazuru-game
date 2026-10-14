@@ -2674,8 +2674,8 @@ function tfxTitle(c, W, H, k, out, txt, img, sup) {
   for (let i = 0; i < 7; i++) { const a = i * 2.4 + 0.6, rad = e * (0.55 + 0.12 * Math.sin(i * 3.1)), tw = Math.pow(Math.max(0, Math.sin(now_ * 3.2 + i * 1.7)), 2); if (tw > 0.05) star4(c, Math.cos(a) * rad, ey + Math.sin(a) * rad, m * 0.022 * (0.5 + tw), tw * (1 - out), '#fff4cc'); }
   c.globalAlpha = (1 - out) * Math.min(1, k * 2);
   const fy = m * 0.2; let fs = m * 0.095; const font = s => '400 ' + s + 'px "Dela Gothic One","Arial Black",sans-serif';
-  c.font = font(fs); let tw = c.measureText(txt).width; const maxW = (W * 0.74) / sc;
-  if (tw > maxW) { fs *= maxW / tw; c.font = font(fs); tw = maxW; }
+  c.font = font(fs); let tw = c.measureText(txt).width; const full = tw + fs * 4.6, maxW = (W * 0.94) / sc;   // лента с хвостами целиком в экране
+  if (full > maxW) { const f = maxW / full; fs *= f; tw *= f; c.font = font(fs); }
   ribbon(c, 0, fy, tw + fs * 1.5, fs * 1.6, sup ? '#4a2c86' : '#c63a2c');
   c.textAlign = 'center'; c.textBaseline = 'middle';
   c.fillStyle = 'rgba(12,8,24,0.5)'; c.fillText(txt, 0, fy + fs * 0.1);
