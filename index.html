@@ -27,9 +27,8 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 /* живой фон (десктоп): видео поверх картинки, появляется, когда заиграло */
 #bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s}
 #bg video.on{opacity:1}
-/* переход между режимами: видео с прозрачностью поверх всего; запасной вариант — вспышка бумаги */
-#trans{position:absolute;inset:0;z-index:35;pointer-events:none}
-#trans video{display:block;width:100%;height:100%;object-fit:cover}
+/* переход между режимами: бумажная анимация на канвасе поверх всего (v21); запасной вариант — вспышка бумаги */
+#tfx{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
 #transFade{position:absolute;inset:0;z-index:35;pointer-events:none;background:var(--paper) url("assets/ui/paper.webp?v=15");background-size:256px;opacity:0;transition:opacity .35s}
 #transFade.in{opacity:1}
 .decor{position:absolute;top:0;z-index:1;pointer-events:none;opacity:.88;transition:opacity .6s}
@@ -452,6 +451,27 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 #loader.ready .ld-bar{visibility:hidden}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.ld-logo,.ld-plank,.cloud,#loader.ready #ldText,.decor{animation:none}}
+/* v21: заставка оживает (класс .enter — только когда анимации разрешены): солнце восходит, логотип разворачивается сверху вниз,
+   по нему пробегает золотой блик, таблички опускаются на верёвках, журавлик летит по полосе загрузки и улетает, когда всё готово */
+#loader>.ld-fx{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.ld-glint{position:absolute;left:0;top:0;width:100%;aspect-ratio:1200/265;pointer-events:none;
+  background:linear-gradient(105deg,transparent 42%,rgba(255,247,214,.85) 50%,transparent 58%) 100% 0/300% 100% no-repeat;
+  -webkit-mask:url("assets/ui/logo.webp?v=15") 0 0/100% 100% no-repeat;mask:url("assets/ui/logo.webp?v=15") 0 0/100% 100% no-repeat}
+.ld-crane{position:absolute;left:calc(var(--p,0)*100%);bottom:30%;width:clamp(36px,7.5vmin,56px);aspect-ratio:1.9/1.4;transform:translateX(-50%) skewX(20deg);transition:left .15s;overflow:visible;pointer-events:none}
+#loader.ready .ld-crane{visibility:visible;animation:ldFly 1.3s ease-in forwards}
+@keyframes ldFly{to{translate:34vw -46vh;scale:.5;opacity:0}}
+#loader.enter .ld-sun{animation:ldSun 1.6s cubic-bezier(.2,.8,.2,1) both,sunrot 60s linear infinite}
+@keyframes ldSun{from{opacity:0;scale:.35;translate:0 16vmin}to{opacity:.95;scale:1;translate:0 0}}
+#loader.enter .ld-logo img{transform-origin:50% 0;animation:ldUnfold 1.1s cubic-bezier(.3,1.35,.5,1) .3s both}
+@keyframes ldUnfold{from{opacity:0;transform:perspective(800px) rotateX(-100deg)}30%{opacity:1}to{opacity:1;transform:perspective(800px) rotateX(0)}}
+#loader.enter .ld-glint{animation:ldGlint 5s ease-in-out 1.6s infinite}
+@keyframes ldGlint{0%{background-position:100% 0}28%,100%{background-position:0 0}}
+#loader.enter .ld-logo small{animation:ldTag 1s ease-out 1s both}
+@keyframes ldTag{from{opacity:0;letter-spacing:.9em}}
+#loader.enter .ld-plank{animation:ldDrop 1s cubic-bezier(.3,1.4,.55,1) calc(.7s + var(--i)*.16s) both,swing var(--sd) ease-in-out var(--sdl) infinite}
+@keyframes ldDrop{from{translate:0 -80vh}to{translate:0 0}}
+#loader.enter .ld-bar,#loader.enter:not(.ready) #ldText{animation:ldFade .6s ease-out 1.3s both}
+@keyframes ldFade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){#bigwinTitle.slam,#bigwinAmount.bump,#winBox.pop .val,#multHud.pop .hv,#menuPop{animation:none}}
 </style>
 <style id="fonts">
@@ -615,15 +635,14 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
     <div id="infoScroll"><div id="infoSheet"></div></div>
   </div>
 
-  <div id="trans" hidden><video id="transVideo" muted playsinline preload="auto" aria-hidden="true"></video></div>
   <div id="transFade" hidden></div>
 
   <div id="loader">
     <div class="ld-sun"></div>
     <div class="cloud" style="--y:12%;--w:34vmin;--d:46s;--dl:-9s"></div><div class="cloud c2" style="--y:58%;--w:26vmin;--d:58s;--dl:-31s"></div><div class="cloud c3" style="--y:34%;--w:18vmin;--d:38s;--dl:-20s"></div>
-    <div class="ld-logo"><img src="assets/ui/logo.webp?v=15" alt="Senbazuru"><small>ORIGAMI SLOT</small></div>
+    <div class="ld-logo"><img src="assets/ui/logo.webp?v=15" alt="Senbazuru"><i class="ld-glint" aria-hidden="true"></i><small>ORIGAMI SLOT</small></div>
     <div class="ld-planks" id="ldPlanks"></div>
-    <div class="ld-bar"><i id="ldFill"></i></div><div id="ldText" data-i18n="loading">Loading</div>
+    <div class="ld-bar" id="ldBar"><i id="ldFill"></i><svg class="ld-crane" viewBox="-0.9 -0.88 1.9 1.4" aria-hidden="true"><g><animateTransform attributeName="transform" type="translate" values="0 0;0 -0.07;0 0" dur="1.1s" repeatCount="indefinite"/><polygon fill="#cfc3a8" points="-0.1,0 0.25,0 0.05,-0.77"><animate attributeName="points" values="-0.1,0 0.25,0 0.05,-0.77;-0.1,0 0.25,0 0.05,0.36;-0.1,0 0.25,0 0.05,-0.77" dur="0.55s" repeatCount="indefinite"/></polygon><polygon fill="#e8dcc2" points="-0.35,0 -0.85,-0.42 -0.78,-0.38 -0.15,0.06"/><polygon fill="#e8dcc2" points="0.3,0 0.72,-0.46 0.8,-0.42 0.4,0.07"/><polygon fill="#ddd0b4" points="0.72,-0.46 0.95,-0.36 0.8,-0.42"/><polygon fill="#f6efe0" points="-0.5,0 0.45,0 0.02,0.24"/><polygon fill="#fbf6ea" points="-0.2,0.02 0.2,0.02 -0.1,-0.8"><animate attributeName="points" values="-0.2,0.02 0.2,0.02 -0.1,-0.8;-0.2,0.02 0.2,0.02 -0.1,0.45;-0.2,0.02 0.2,0.02 -0.1,-0.8" dur="0.55s" repeatCount="indefinite"/></polygon></g></svg></div><div id="ldText" data-i18n="loading">Loading</div>
   </div>
   <div id="intro" hidden><video id="introVideo" muted playsinline preload="auto" aria-label="{STUDIO}"></video></div>
 </div>
@@ -692,7 +711,6 @@ const ASSETS = {
   antic: { src: 'assets/anim/anticipation.webp?v=15', fw: 100, fh: 500, frames: 48, cols: 48, fps: 24 },
   bigwinBg: { src: 'assets/anim/bigwin_bg.webp?v=15', fw: 256, fh: 256, frames: 36, cols: 36, fps: 12 },
   /* переходы между режимами — webm VP9 с альфой (2.5 с, смена сцены на 1.25 с); где не играет — вспышка бумаги */
-  trans: { fs: 'assets/video/trans_fs.webm?v=15', super: 'assets/video/trans_super.webm?v=15', end: 'assets/video/trans_end.webm?v=15' },
   /* живые фоны, только десктоп: webm + mp4 (Safari), петли 8 с */
   bgVideo: { land: ['assets/video/bg_land.webm?v=15', 'assets/video/bg_land.mp4?v=15'], fs: ['assets/video/bg_fs.webm?v=15', 'assets/video/bg_fs.mp4?v=15'], super: ['assets/video/bg_super.webm?v=15', 'assets/video/bg_super.mp4?v=15'] },
   /* Линии выплат: cord — плитка шнура (бесшовная по горизонтали, ось — середина высоты, сам шнур занимает band долю высоты),
@@ -1552,7 +1570,6 @@ function setBackground(mode) {
 }
 /* живой фон: только десктоп в альбомной ориентации, после старта игры; сцена — как у картинки */
 const VIDEO_OK = (() => { const v = document.createElement('video'); return !!(v.canPlayType && (v.canPlayType('video/webm; codecs="vp9"') || v.canPlayType('video/mp4'))); })();
-const ALPHA_VIDEO_OK = (() => { const v = document.createElement('video'); return !!(v.canPlayType && v.canPlayType('video/webm; codecs="vp9"')) && !/^((?!chrome|android).)*safari/i.test(navigator.userAgent); })();
 function setBgVideo(mode) {
   const v = $('bgVideo'), want = G.ready && !LITE && !reduceMotion && VIDEO_OK && mode !== 'portrait';
   const key = app.dataset.fs === '2' ? 'super' : app.dataset.fs === '1' ? 'fs' : 'land';
@@ -1562,21 +1579,10 @@ function setBgVideo(mode) {
   v.src = v.canPlayType('video/webm; codecs="vp9"') ? webm : mp4; v.onplaying = () => { if (setBgVideo.cur === key) v.classList.add('on'); };
   v.play().catch(() => { v.hidden = true; });
 }
-/* переход между режимами: видео на весь экран; в момент полного перекрытия (1.25 с) — mid(): смена фона, рамки, музыки */
-async function transition(name, mid) {
-  const el = $('trans'), v = $('transVideo');
-  if (ALPHA_VIDEO_OK && !reduceMotion && !G.slam) {
-    el.hidden = false; v.src = ASSETS.trans[name]; v.playbackRate = G.turbo ? 1.8 : 1;
-    const played = await v.play().then(() => true).catch(() => false);
-    if (played) {
-      const t0 = now();
-      await new Promise(res => (function chk() { if (v.currentTime >= 1.2 || now() - t0 > 2.5 || G.slam) res(); else requestAnimationFrame(chk); })());
-      mid();
-      await new Promise(res => { v.onended = res; setTimeout(res, G.turbo ? 1200 : 1800); });
-      v.onended = null; v.pause(); el.hidden = true; return;
-    }
-    el.hidden = true;
-  }
+/* переход между режимами: бумажная анимация на канвасе (TRANS, v21); mid() — в момент полного перекрытия: смена фона, рамки, музыки.
+   Без анимаций (reduce motion) и при пропуске — вспышка бумаги. */
+async function transition(name, mid, info) {
+  if (!reduceMotion && !G.slam && TRANS[name]) { await TRANS[name](mid, info || {}); return; }
   const f = $('transFade'); f.hidden = false; void f.offsetWidth; f.classList.add('in'); await wait(360); mid(); await wait(120); f.classList.remove('in'); await wait(360); f.hidden = true;
 }
 /* Большие декорации по краям — только на больших экранах: на телефонах их не грузим вовсе. */
@@ -2102,7 +2108,7 @@ async function presentRound(round) {
       await transition(ev.super ? 'super' : 'fs', () => {
         clearWins(); enterFs(ev.totalFs, !!ev.super); popFs(); confetti(1.2); if (ev.startWilds) Snd.sfx('super_wilds', { when: 0.3 });
         if (ev.startWilds) { const tt = now(); readPositions(ev.startWilds, P.padded).forEach((p, i) => { const key = p.reel + ',' + p.row; R.sticky.set(key, ev.startWilds[i].multiplier); R.pop.set(key, tt); }); }
-      });
+      }, { n: ev.totalFs });
       await hold(500);
     } else if (ev.type === 'updateFreeSpin') {
       P.fsI = ev.amount; setFs(ev.amount, ev.total);
@@ -2201,7 +2207,7 @@ async function bootReplay() {
   $('btnReplay').onclick = runReplay;
   try {
     if (!RGS.root || !PARAM.game || !PARAM.version || PARAM.event === null) throw new Error('replay params');
-    const [data] = await Promise.all([RGS.replay(PARAM.game, PARAM.version, PARAM.modeRaw, PARAM.event), loadAssets(p => { $('ldFill').style.width = Math.round(p * 100) + '%'; })]);
+    const [data] = await Promise.all([RGS.replay(PARAM.game, PARAM.version, PARAM.modeRaw, PARAM.event), loadAssets(ldProgress)]);
     G.replay.data = data;
   } catch (e) {
     console.error(e); try { await loadAssets(() => {}); } catch (e2) { /* без картинок останется только сообщение */ }
@@ -2253,14 +2259,14 @@ function partCount(k) {
   return Math.round(n * (LITE ? 0.6 : 1));
 }
 function shade(hex, f) { const n = parseInt(hex.slice(1), 16), c = s => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * f))); return 'rgb(' + c(16) + ',' + c(8) + ',' + c(0) + ')'; }
-function drawPetal(p, flip) {   // лепесток сакуры с надрезом, сложенный пополам: две половины разного тона
-  const r = p.r, c = bgCtx;
+function drawPetal(p, flip, c = bgCtx) {   // лепесток сакуры с надрезом, сложенный пополам: две половины разного тона
+  const r = p.r;
   c.beginPath(); c.moveTo(0, r); c.bezierCurveTo(r * 0.95, r * 0.35, r * 0.8, -r * 0.7, r * 0.2, -r); c.lineTo(0, -r * 0.76); c.lineTo(-r * 0.2, -r);
   c.bezierCurveTo(-r * 0.8, -r * 0.7, -r * 0.95, r * 0.35, 0, r); c.closePath();
   c.fillStyle = p.c; c.fill(); c.save(); c.clip(); c.fillStyle = shade(p.c, 0.84); c.fillRect(flip > 0 ? 0 : -r, -r, r, 2 * r); c.restore();
 }
-function drawLeaf(p, flip) {   // кусочек золотой фольги: неровный четырёхугольник с бликом
-  const r = p.r, c = bgCtx;
+function drawLeaf(p, flip, c = bgCtx) {   // кусочек золотой фольги: неровный четырёхугольник с бликом
+  const r = p.r;
   c.beginPath(); c.moveTo(-r, -r * 0.5); c.lineTo(r * 0.7, -r * 0.8); c.lineTo(r, r * 0.6); c.lineTo(-r * 0.6, r * 0.8); c.closePath();
   c.fillStyle = flip > 0 ? p.c : shade(p.c, 0.78); c.fill();
   c.globalAlpha *= 0.6; c.fillStyle = '#fff6d8'; c.beginPath(); c.moveTo(-r * 0.6, -r * 0.45); c.lineTo(r * 0.2, -r * 0.62); c.lineTo(-r * 0.1, -r * 0.2); c.fill();
@@ -2500,6 +2506,406 @@ function updateScene(t) {
   updateBgFx(t, step); updateFrameFx(t);
 }
 
+/* ================= v21: бумажные переходы и живая заставка ================= */
+/* Переходы рисуются кодом на одном канвасе поверх всего (#tfx), поэтому одинаковы в Chrome и Safari.
+   Free spins — «конверт»: четыре клапана бумаги с волнами сэйгайха складываются к центру, табличка «N FREE SPINS», клапаны раскрываются, из центра разлетаются журавлики.
+   Super — красный веер с золотом раскрывается на весь экран и складывается в другую сторону, разлетается золотая фольга.
+   Конец бонуса — золотая ширма: по три створки с каждой стороны смыкаются, в центре логотип, ширма раскрывается.
+   Выход с заставки — стая бумажных журавликов пролетает сквозь экран. mid() вызывается в момент полного перекрытия. */
+const TFX = { cv: null, c: null, W: 0, H: 0, dpr: 1, pat: {}, sprites: null, su: 0, img: {} };
+const seg = (t, a, b) => t <= a ? 0 : t >= b ? 1 : (t - a) / (b - a);
+const eio = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eob = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2);
+const lcg = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+const LOGO_SRC = 'assets/ui/logo.webp?v=15';
+function tfxImg(src) { let im = TFX.img[src]; if (!im) { im = TFX.img[src] = new Image(); im.src = src; } return im.complete && im.naturalWidth ? im : null; }
+function tfxPrep() { craneSprites(); [MODE_UI.BONUS.img, MODE_UI.SUPER.img, LOGO_SRC].forEach(tfxImg); }
+function tfxSize(z) {
+  if (!TFX.cv) { const cv = TFX.cv = document.createElement('canvas'); cv.id = 'tfx'; cv.setAttribute('aria-hidden', 'true'); app.appendChild(cv); TFX.c = cv.getContext('2d'); }
+  const rc = app.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2), W = Math.round(rc.width), H = Math.round(rc.height);
+  if (W !== TFX.W || H !== TFX.H || dpr !== TFX.dpr) { TFX.cv.width = Math.round(W * dpr); TFX.cv.height = Math.round(H * dpr); Object.assign(TFX, { W, H, dpr, pat: {} }); }
+  TFX.cv.style.zIndex = z; TFX.cv.hidden = false; return TFX.c;
+}
+/* один проход анимации: dur секунд (турбо — быстрее), mid() — один раз в midAt или при досрочном завершении */
+function tfxRun(dur, midAt, mid, draw, z) {
+  return new Promise(res => {
+    const c = tfxSize(z || 35), sp = G.turbo ? 1.6 : 1, t0 = performance.now(); let over = false, midDone = false;
+    const doMid = () => { if (midDone) return; midDone = true; try { if (mid) mid(); } catch (e) { console.error(e); } };
+    const fin = () => { if (over) return; over = true; doMid(); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, TFX.cv.width, TFX.cv.height); TFX.cv.hidden = true; res(); };
+    setTimeout(fin, dur / sp * 1000 + 1500);   // вкладка скрыта и кадры не идут — всё равно закончить
+    (function step() {
+      if (over) return;
+      const t = (performance.now() - t0) / 1000 * sp;
+      if (t >= dur || G.slam) { fin(); return; }
+      if (t >= midAt) doMid();
+      c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, TFX.cv.width, TFX.cv.height); c.setTransform(TFX.dpr, 0, 0, TFX.dpr, 0, 0); c.globalAlpha = 1;
+      try { draw(c, t, TFX.W, TFX.H); } catch (e) { console.error(e); fin(); return; }
+      requestAnimationFrame(step);
+    })();
+  });
+}
+/* узоры бумаги: плитка рисуется в разрешении экрана и повторяется */
+function tfxPat(key, w, h, paint) {
+  const k = key + w.toFixed(1); if (TFX.pat[k]) return TFX.pat[k];
+  const d = TFX.dpr, cv = document.createElement('canvas'); cv.width = Math.max(2, Math.round(w * d)); cv.height = Math.max(2, Math.round(h * d));
+  const g = cv.getContext('2d'); g.scale(cv.width / w, cv.height / h); paint(g, w, h);
+  const p = TFX.c.createPattern(cv, 'repeat');
+  if (p.setTransform && window.DOMMatrix) p.setTransform(new DOMMatrix([w / cv.width, 0, 0, h / cv.height, 0, 0]));
+  return TFX.pat[k] = p;
+}
+function wrapDraw(g, w, h, x, y, s, fn) { for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) if (x + ox > -s && x + ox < w + s && y + oy > -s && y + oy < h + s) fn(x + ox, y + oy); }
+function fiberPat() {   // волокна бумаги: светлые и тёмные штрихи на прозрачном — кладутся поверх любого цвета
+  return tfxPat('fiber', 160, 160, (g, w, h) => {
+    const rn = lcg(11); g.lineCap = 'round';
+    for (let i = 0; i < 90; i++) {
+      const x = rn() * w, y = rn() * h, l = 4 + rn() * 14, a = rn() * TAU, dark = rn() < 0.4;
+      g.strokeStyle = dark ? 'rgba(20,14,8,' + (0.04 + rn() * 0.05).toFixed(3) + ')' : 'rgba(255,252,240,' + (0.05 + rn() * 0.08).toFixed(3) + ')'; g.lineWidth = 0.6 + rn();
+      wrapDraw(g, w, h, x, y, l, (px, py) => { g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + Math.cos(a) * l * 0.5 + 2, py + Math.sin(a) * l * 0.5 - 2, px + Math.cos(a) * l, py + Math.sin(a) * l); g.stroke(); });
+    }
+  });
+}
+function wavesPat(m) {   // волны сэйгайха: бирюза с золотым кольцом
+  const r = clamp(m * 0.055, 16, 52);
+  return tfxPat('waves', r * 2, r, (g, w, h) => {
+    g.fillStyle = '#17535b'; g.fillRect(0, 0, w, h); g.lineWidth = r * 0.06;
+    for (let k = -2; k <= 4; k++) for (const x of (k % 2 ? [-r, r, 3 * r] : [0, 2 * r])) {
+      const y = k * r / 2; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fillStyle = '#17535b'; g.fill();
+      for (const [f, col] of [[0.95, '#0f3f47'], [0.8, '#2b7f80'], [0.62, '#c9a44c'], [0.44, '#2b7f80'], [0.26, '#2b7f80']]) { g.beginPath(); g.arc(x, y, r * f, 0, TAU); g.strokeStyle = col; g.stroke(); }
+    }
+  });
+}
+function fleckPat(m, key, base, golds, n) {   // бумага с золотыми хлопьями (кирикане)
+  const s = clamp(m * 0.2, 70, 180);
+  return tfxPat(key, s, s, (g, w, h) => {
+    g.fillStyle = base; g.fillRect(0, 0, w, h); const rn = lcg(7);
+    for (let i = 0; i < n; i++) {
+      const x = rn() * w, y = rn() * h, z = w * (0.012 + rn() * 0.035), a = rn() * TAU, al = 0.35 + rn() * 0.55, col = golds[(rn() * golds.length) | 0], q = 0.4 + rn() * 0.7;
+      wrapDraw(g, w, h, x, y, z, (px, py) => { g.save(); g.translate(px, py); g.rotate(a); g.globalAlpha = al; g.fillStyle = col; g.beginPath(); g.moveTo(-z / 2, -z * q / 2); g.lineTo(z / 2, -z * q * 0.3); g.lineTo(z * 0.4, z * q / 2); g.lineTo(-z * 0.45, z * q * 0.4); g.closePath(); g.fill(); g.restore(); });
+    }
+  });
+}
+function goldLeafPat(m) {   // сусальное золото квадратами — для ширмы: соседние листы чуть разного тона
+  const s = clamp(m * 0.08, 28, 72);
+  return tfxPat('leaf', s * 4, s * 4, (g, w, h) => {
+    const rn = lcg(5);
+    for (let i = 0; i < 16; i++) { const x = (i % 4) * s, y = (i >> 2) * s, f = 0.94 + rn() * 0.1; g.fillStyle = shade('#ddb860', f); g.fillRect(x, y, s, s); g.fillStyle = 'rgba(255,246,210,0.16)'; g.fillRect(x, y, s, s * 0.05); }
+    g.strokeStyle = 'rgba(130,88,28,0.16)'; g.lineWidth = 1; g.beginPath();
+    for (let k = 0; k < 4; k++) { g.moveTo(0, k * s + 0.5); g.lineTo(w, k * s + 0.5); g.moveTo(k * s + 0.5, 0); g.lineTo(k * s + 0.5, h); }
+    g.stroke();
+    for (let i = 0; i < 30; i++) { g.fillStyle = 'rgba(255,240,190,' + (0.2 + rn() * 0.4).toFixed(2) + ')'; const z = 1 + rn() * 2.5; g.fillRect(rn() * w, rn() * h, z, z); }
+  });
+}
+/* аффинное преобразование, переводящее треугольник s0 s1 s2 в d0 d1 d2 — узор бумаги едет вместе с клапаном */
+function aff(c, s0, s1, s2, d0, d1, d2) {
+  const ux = s1[0] - s0[0], uy = s1[1] - s0[1], vx = s2[0] - s0[0], vy = s2[1] - s0[1], det = ux * vy - vx * uy;
+  if (Math.abs(det) < 1e-6) return;
+  const px = d1[0] - d0[0], py = d1[1] - d0[1], qx = d2[0] - d0[0], qy = d2[1] - d0[1];
+  const i11 = vy / det, i12 = -vx / det, i21 = -uy / det, i22 = ux / det;
+  const a = px * i11 + qx * i21, b = py * i11 + qy * i21, cc = px * i12 + qx * i22, d = py * i12 + qy * i22;
+  c.transform(a, b, cc, d, d0[0] - a * s0[0] - cc * s0[1], d0[1] - b * s0[0] - d * s0[1]);
+}
+function star4(c, x, y, r, a, color) {
+  c.globalAlpha = a; c.fillStyle = color; c.beginPath();
+  c.moveTo(x, y - r); c.quadraticCurveTo(x, y, x + r, y); c.quadraticCurveTo(x, y, x, y + r); c.quadraticCurveTo(x, y, x - r, y); c.quadraticCurveTo(x, y, x, y - r);
+  c.fill(); c.globalAlpha = 1;
+}
+/* --- журавлики-спрайты: 6 цветов × 4 положения крыльев, рисуются один раз --- */
+const CRANE_COLORS = ['#fbf6ea', '#d8402f', '#e9b63c', '#f4a6bf', '#2f8a86', '#8fb3e6'];
+function craneSprites() {
+  if (TFX.sprites) return TFX.sprites;
+  const d = Math.min(window.devicePixelRatio || 1, 2), u = TFX.su = Math.round(48 * d);
+  TFX.sprites = CRANE_COLORS.map(col => [-0.85, -0.3, 0.3, 0.85].map(wy => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = u * 2; const g = cv.getContext('2d'); g.translate(u, u); g.scale(u, u);
+    const poly = (pts, f) => { g.beginPath(); g.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]); g.closePath(); g.fillStyle = shade(col, f); g.fill(); };
+    poly([-0.1, 0, 0.25, 0, 0.05, wy * 0.9 - 0.05], 0.78);
+    poly([-0.35, 0, -0.85, -0.42, -0.78, -0.38, -0.15, 0.06], 0.9);
+    poly([0.3, 0, 0.72, -0.46, 0.8, -0.42, 0.4, 0.07], 0.9);
+    poly([0.72, -0.46, 0.95, -0.36, 0.8, -0.42], 0.86);
+    poly([-0.5, 0, 0.45, 0, 0.02, 0.24], 0.97);
+    poly([-0.2, 0.02, 0.2, 0.02, -0.1, wy], wy < 0 ? 1.06 : 0.84);
+    return cv;
+  }));
+  return TFX.sprites;
+}
+const FLAP = [0, 1, 2, 3, 2, 1];
+function drawSprite(c, col, ph, x, y, s, rot, flipY, dpr) {   // s — размах «единицы» журавлика в css-пикселях
+  const sp = TFX.sprites[col][FLAP[((ph | 0) % 6 + 6) % 6]], k = s / TFX.su, cs = Math.cos(rot) * k * dpr, sn = Math.sin(rot) * k * dpr, f = flipY ? -1 : 1;
+  c.setTransform(cs, sn, -sn * f, cs * f, x * dpr, y * dpr); c.drawImage(sp, -TFX.su, -TFX.su);
+}
+/* стайка журавликов разлетается из центра к краям и «на зрителя» */
+function craneBurst(n, W, H) {
+  const m = Math.min(W, H);
+  return Array.from({ length: n }, (_, i) => { const a = (i / n) * TAU + rnd(-0.2, 0.2); return { a, v: m * rnd(0.55, 1.05), s: m * rnd(0.035, 0.06), col: (Math.random() * CRANE_COLORS.length) | 0, ph: rnd(0, 6), sp: rnd(9, 13), d0: m * rnd(0.02, 0.12) }; });
+}
+function drawBurst(c, birds, u, W, H) {
+  if (!birds || u < 0) return;
+  const dpr = TFX.dpr, cx = W / 2, cy = H / 2, al = 1 - seg(u, 0.45, 0.85);
+  if (al <= 0) return;
+  c.globalAlpha = al;
+  for (const b of birds) {
+    const r = b.d0 + b.v * (u + 0.9 * u * u), x = cx + Math.cos(b.a) * r, y = cy + Math.sin(b.a) * r * 0.8 - u * u * H * 0.15;
+    drawSprite(c, b.col, b.ph + u * b.sp, x, y, b.s * (0.6 + 1.6 * u), b.a, Math.cos(b.a) < 0, dpr);
+  }
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalAlpha = 1;
+}
+/* --- общая табличка: эмблема режима на лучах + надпись на ленте --- */
+function ribbon(c, x, y, w, h, col) {
+  const l = x - w / 2, r = x + w / 2, tp = y - h / 2, b = y + h / 2, e = h * 0.95, d = h * 0.32;
+  for (const s of [-1, 1]) {
+    const x0 = s < 0 ? l : r, xo = x0 + s * e;
+    c.fillStyle = shade(col, 0.62); c.beginPath(); c.moveTo(x0, tp + d); c.lineTo(xo, tp + d); c.lineTo(xo - s * e * 0.36, y + d); c.lineTo(xo, b + d); c.lineTo(x0, b + d); c.closePath(); c.fill();
+    c.fillStyle = shade(col, 0.4); c.beginPath(); c.moveTo(x0 - s * h * 0.36, b); c.lineTo(x0, b); c.lineTo(x0, b + d); c.closePath(); c.fill();
+  }
+  c.fillStyle = col; c.fillRect(l, tp, w, h); c.fillStyle = fiberPat(); c.fillRect(l, tp, w, h);
+  c.fillStyle = 'rgba(255,250,235,0.18)'; c.fillRect(l, tp, w, h * 0.14); c.fillStyle = 'rgba(10,8,20,0.2)'; c.fillRect(l, b - h * 0.12, w, h * 0.12);
+  c.strokeStyle = 'rgba(240,200,100,0.85)'; c.lineWidth = Math.max(1, h * 0.035); c.strokeRect(l + h * 0.1, tp + h * 0.1, w - h * 0.2, h - h * 0.2);
+}
+function tfxTitle(c, W, H, k, out, txt, img, sup) {
+  if (k <= 0 || out >= 1) return;
+  const m = Math.min(W, H), cx = W / 2, cy = H * 0.47, sc = (0.55 + 0.45 * k) * (1 + 0.3 * out), now_ = performance.now() / 1000;
+  c.save(); c.globalAlpha = (1 - out) * Math.min(1, k * 2); c.translate(cx, cy); c.scale(sc, sc);
+  const ey = -m * 0.09, rr = m * 0.66, n = 18;   // лучи за эмблемой
+  c.save(); c.translate(0, ey); c.rotate(now_ * 0.22); c.fillStyle = sup ? 'rgba(255,214,120,0.2)' : 'rgba(255,246,220,0.13)';
+  for (let i = 0; i < n; i++) { const a0 = i * TAU / n; c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, rr, a0, a0 + TAU / n / 2); c.closePath(); c.fill(); }
+  c.restore();
+  const g = c.createRadialGradient(0, ey, 0, 0, ey, m * 0.32); g.addColorStop(0, sup ? 'rgba(255,220,130,0.7)' : 'rgba(255,240,200,0.55)'); g.addColorStop(1, 'rgba(255,230,160,0)');
+  c.fillStyle = g; c.fillRect(-m * 0.32, ey - m * 0.32, m * 0.64, m * 0.64);
+  const e = m * 0.42; if (img) c.drawImage(img, -e / 2, ey - e / 2, e, e);
+  for (let i = 0; i < 7; i++) { const a = i * 2.4 + 0.6, rad = e * (0.55 + 0.12 * Math.sin(i * 3.1)), tw = Math.pow(Math.max(0, Math.sin(now_ * 3.2 + i * 1.7)), 2); if (tw > 0.05) star4(c, Math.cos(a) * rad, ey + Math.sin(a) * rad, m * 0.022 * (0.5 + tw), tw * (1 - out), '#fff4cc'); }
+  c.globalAlpha = (1 - out) * Math.min(1, k * 2);
+  const fy = m * 0.2; let fs = m * 0.095; const font = s => '400 ' + s + 'px "Dela Gothic One","Arial Black",sans-serif';
+  c.font = font(fs); let tw = c.measureText(txt).width; const maxW = (W * 0.74) / sc;
+  if (tw > maxW) { fs *= maxW / tw; c.font = font(fs); tw = maxW; }
+  ribbon(c, 0, fy, tw + fs * 1.5, fs * 1.6, sup ? '#4a2c86' : '#c63a2c');
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillStyle = 'rgba(12,8,24,0.5)'; c.fillText(txt, 0, fy + fs * 0.1);
+  if (sup) { const tg = c.createLinearGradient(0, fy - fs / 2, 0, fy + fs / 2); tg.addColorStop(0, '#fff3c0'); tg.addColorStop(0.55, '#f0c552'); tg.addColorStop(1, '#c48a26'); c.fillStyle = tg; } else c.fillStyle = '#fbf6ea';
+  c.fillText(txt, 0, fy + fs * 0.03);
+  c.restore();
+}
+/* --- Free spins: конверт из четырёх клапанов --- */
+function drawFlap(c, f, p, W, H, pat) {
+  if (p <= 0.001) return;
+  const cx = W / 2, cy = H / 2, A = f.a, B = f.b, mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, D = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / D, uy = (cy - my) / D;
+  const phi = (1 - p) * Math.PI / 2, z = D * Math.sin(phi), fz = 2.4 * Math.max(W, H), k = fz / (fz - z);
+  const ix = mx + ux * D * Math.cos(phi), iy = my + uy * D * Math.cos(phi), P = [cx + (ix - cx) * k, cy + (iy - cy) * k];
+  if (z > 1) {   // мягкая тень приподнятого клапана
+    c.fillStyle = 'rgba(8,12,34,0.1)';
+    for (let i = 1; i <= 3; i++) { const o = z * 0.07 * i; c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(B[0], B[1]); c.lineTo(ix + o * 0.5, iy + o); c.closePath(); c.fill(); }
+  }
+  c.save(); c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(B[0], B[1]); c.lineTo(P[0], P[1]); c.closePath();
+  aff(c, A, B, [cx, cy], A, B, P); c.fillStyle = pat; c.fill(); c.fillStyle = fiberPat(); c.fill(); c.restore();
+  const v = f.tone + Math.sin(phi) * f.light;
+  if (Math.abs(v) > 0.004) { c.fillStyle = v < 0 ? 'rgba(6,10,30,' + (-v).toFixed(3) + ')' : 'rgba(255,250,235,' + v.toFixed(3) + ')'; c.fill(); }
+  c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(P[0], P[1]); c.lineTo(B[0], B[1]);
+  c.strokeStyle = 'rgba(255,246,220,0.6)'; c.lineWidth = Math.max(1, Math.min(W, H) * 0.0035); c.stroke();
+}
+function envelopeFlaps(W, H) {
+  return [{ a: [0, H], b: [0, 0], tone: 0, light: -0.35 }, { a: [W, 0], b: [W, H], tone: -0.06, light: 0.12 },
+    { a: [0, 0], b: [W, 0], tone: 0.05, light: -0.4 }, { a: [W, H], b: [0, H], tone: -0.12, light: 0.16 }];
+}
+/* --- Super: складной веер, ось под нижним краем экрана --- */
+function fanGeo(W, H) {
+  let R = Math.hypot(W / 2, H * 1.2) * 1.04; const r0 = R * 0.22, oy = H + r0 * 0.7; R = Math.hypot(W / 2, oy) * 1.04;
+  const corner = Math.atan2(oy - H, W / 2), lo = Math.PI + Math.max(0, corner - 0.05), hi = TAU - Math.max(0, corner - 0.05);
+  return { ox: W / 2, oy, R, r0, lo, hi };
+}
+function drawFan(c, W, H, q0, q1, pat) {
+  if (q1 - q0 < 0.001) return;
+  const { ox, oy, R, r0, lo, hi } = fanGeo(W, H), a0 = lo + (hi - lo) * q0, a1 = lo + (hi - lo) * q1, N = 18, span = (a1 - a0) / N, full = (hi - lo) / N, cmp = 1 - (q1 - q0);
+  const wedge = (b0, b1, r1, r2) => { c.beginPath(); c.arc(ox, oy, r2, b0, b1); c.arc(ox, oy, r1, b1, b0, true); c.closePath(); };
+  for (const [e, s] of [[a1, 1], [a0, -1]]) for (let i = 0; i < 4; i++) {   // тень от краёв веера на сцену
+    c.fillStyle = 'rgba(10,6,20,' + [0.22, 0.14, 0.08, 0.04][i] + ')'; const b0 = e + s * i * 0.025, b1 = e + s * (i + 1) * 0.025; wedge(Math.min(b0, b1), Math.max(b0, b1), r0 * 0.3, R);
+    c.fill();
+  }
+  const bk = c.createRadialGradient(ox, oy, r0 * 0.3, ox, oy, r0); bk.addColorStop(0, 'rgba(20,10,8,0.75)'); bk.addColorStop(1, 'rgba(60,24,16,0.45)');
+  c.fillStyle = bk; wedge(a0, a1, r0 * 0.25, r0 * 1.01); c.fill();
+  for (let i = 0; i < N; i++) {   // складки: узор поворачивается вместе со своей складкой
+    const b0 = a0 + i * span, b1 = b0 + span, fin = lo + (i + 0.5) * full;
+    c.save(); wedge(b0 - 0.002, b1 + 0.002, r0, R); c.translate(ox, oy); c.rotate(b0 + span / 2 - fin); c.translate(-ox, -oy);
+    c.fillStyle = pat; c.fill(); c.fillStyle = fiberPat(); c.fill(); c.restore();
+  }
+  c.lineCap = 'butt'; c.strokeStyle = '#e9c25a';
+  for (const [rr, lw] of [[0.6, 0.026], [0.645, 0.008], [0.36, 0.01], [0.335, 0.004]]) { c.lineWidth = R * lw; c.beginPath(); c.arc(ox, oy, R * rr, a0, a1); c.stroke(); }
+  for (let i = 0; i < N; i++) {   // горы и долины складок: чем сильнее сжат веер, тем контрастнее
+    const b0 = a0 + i * span, bm = b0 + span / 2, b1 = b0 + span;
+    c.fillStyle = 'rgba(255,236,200,' + (0.05 + 0.12 * cmp).toFixed(3) + ')'; wedge(b0, bm, r0, R); c.fill();
+    c.fillStyle = 'rgba(30,6,12,' + (0.14 + 0.36 * cmp).toFixed(3) + ')'; wedge(bm, b1, r0, R); c.fill();
+  }
+  c.strokeStyle = 'rgba(255,230,170,0.35)'; c.lineWidth = Math.max(1, R * 0.0015);
+  for (let i = 0; i <= N; i++) { const b = a0 + i * span; c.beginPath(); c.moveTo(ox + Math.cos(b) * r0, oy + Math.sin(b) * r0); c.lineTo(ox + Math.cos(b) * R, oy + Math.sin(b) * R); c.stroke(); }
+  for (let i = 0; i <= N; i++) {   // лакированные планки у основания: по одной на складку
+    const b = a0 + i * span, w1 = Math.min(span * 0.22, R * 0.006 / (r0 * 0.3)), w2 = Math.min(span * 0.3, R * 0.02 / (r0 * 1.12));
+    c.beginPath(); c.moveTo(ox + Math.cos(b - w1) * r0 * 0.3, oy + Math.sin(b - w1) * r0 * 0.3); c.lineTo(ox + Math.cos(b - w2) * r0 * 1.12, oy + Math.sin(b - w2) * r0 * 1.12);
+    c.lineTo(ox + Math.cos(b + w2) * r0 * 1.12, oy + Math.sin(b + w2) * r0 * 1.12); c.lineTo(ox + Math.cos(b + w1) * r0 * 0.3, oy + Math.sin(b + w1) * r0 * 0.3); c.closePath();
+    c.fillStyle = '#2b1710'; c.fill(); c.strokeStyle = 'rgba(214,160,90,0.55)'; c.lineWidth = 1; c.stroke();
+  }
+}
+function goldBurst(n, W, H) {
+  const m = Math.min(W, H);
+  return Array.from({ length: n }, () => { const a = rnd(0, TAU), v = m * rnd(0.4, 1.1); return { vx: Math.cos(a) * v, vy: Math.sin(a) * v - m * 0.3, r: m * rnd(0.008, 0.016), rot: rnd(0, TAU), vr: rnd(-6, 6), fl: rnd(0.4, 0.9), ph: rnd(0, TAU), c: PALETTE.super[(Math.random() * 4) | 0] }; });
+}
+function drawGold(c, parts, u, W, H) {
+  if (!parts || u < 0) return;
+  const al = 1 - seg(u, 0.5, 0.9); if (al <= 0) return;
+  for (const p of parts) {
+    const x = W / 2 + p.vx * u, y = H * 0.47 + p.vy * u + Math.min(W, H) * 0.9 * u * u, fl = Math.cos(TAU * u / p.fl + p.ph);
+    c.save(); c.translate(x, y); c.rotate(p.rot + p.vr * u); c.scale(0.25 + 0.75 * Math.abs(fl), 1); c.globalAlpha = al; drawLeaf(p, fl, c); c.restore();
+  }
+  c.globalAlpha = 1;
+}
+/* --- конец бонуса: ширма-бёбу, по три створки от каждого края --- */
+function drawByobu(c, W, H, q, pat) {
+  if (q <= 0.001) return;
+  const al = (1 - q) * Math.PI / 2, n = 3, w = W / 2 / n, fz = 2.6 * Math.max(W, H), cx = W / 2, cy = H / 2, lw = Math.max(2, Math.min(W, H) * 0.012);
+  for (const side of [-1, 1]) {
+    const E = [];
+    for (let j = 0; j <= n; j++) { const xf = j * w * Math.cos(al), z = j % 2 ? w * Math.sin(al) : 0, k = fz / (fz - z), x = side < 0 ? xf : W - xf; E.push([cx + (x - cx) * k, cy - cy * k, cy + (H - cy) * k, side < 0 ? j * w : W - j * w]); }
+    for (let j = 0; j < n; j++) {
+      const e0 = E[j], e1 = E[j + 1];
+      c.save(); c.beginPath(); c.moveTo(e0[0], e0[1]); c.lineTo(e1[0], e1[1]); c.lineTo(e1[0], e1[2]); c.lineTo(e0[0], e0[2]); c.closePath();
+      aff(c, [e0[3], 0], [e1[3], 0], [e0[3], H], [e0[0], e0[1]], [e1[0], e1[1]], [e0[0], e0[2]]); c.fillStyle = pat; c.fill(); c.clip(); byobuPaint(c, W, H); c.restore();
+      c.beginPath(); c.moveTo(e0[0], e0[1]); c.lineTo(e1[0], e1[1]); c.lineTo(e1[0], e1[2]); c.lineTo(e0[0], e0[2]); c.closePath();   // роспись сбросила путь — строим створку заново
+      const lit = (j % 2 === 0) === (side < 0), v = Math.sin(al) * (lit ? 0.06 : 0.4) + (lit ? 0 : 0.04);
+      c.fillStyle = 'rgba(40,22,6,' + v.toFixed(3) + ')'; c.fill();
+      c.strokeStyle = '#1f1510'; c.lineWidth = lw; c.stroke();
+      c.strokeStyle = 'rgba(255,226,150,0.6)'; c.lineWidth = Math.max(1, lw * 0.25); c.stroke();
+    }
+  }
+}
+/* роспись ширмы в «плоских» координатах экрана: золотые облака-касуми и журавлики; каждая створка показывает свой кусок */
+function byobuPaint(c, W, H) {
+  const m = Math.min(W, H), hh = m * 0.075, band = (x0, x1, y, k) => { const h2 = hh * k, r = h2 / 2; c.beginPath(); c.moveTo(x0 + r, y); c.lineTo(x1 - r, y); c.arc(x1 - r, y + r, r, -Math.PI / 2, Math.PI / 2); c.lineTo(x0 + r, y + h2); c.arc(x0 + r, y + r, r, Math.PI / 2, Math.PI * 1.5); c.closePath(); c.fill(); c.stroke(); };
+  c.fillStyle = '#efd385'; c.strokeStyle = 'rgba(150,100,30,0.45)'; c.lineWidth = Math.max(1, m * 0.003);
+  for (const [x0, x1, y, k] of [[-0.05, 0.42, 0.1, 1], [0.08, 0.3, 0.1 + 0.06, 0.8], [0.55, 1.05, 0.8, 1], [0.7, 0.95, 0.8 - 0.05, 0.7], [0.62, 0.9, 0.2, 0.7], [0.02, 0.2, 0.74, 0.7]]) band(x0 * W, x1 * W, y * H, k);
+  const sp = craneSprites(), su = TFX.su;
+  for (const [x, y, s, f, col] of [[0.13, 0.38, 0.11, 1, 1], [0.25, 0.3, 0.08, 2, 0], [0.79, 0.62, 0.1, 1, 0], [0.9, 0.54, 0.075, 2, 1]]) { const k = m * s / su; c.save(); c.translate(x * W, y * H); c.rotate(-0.15); c.scale(k, k); c.drawImage(sp[col][f], -su, -su); c.restore(); }
+}
+const TRANS = {
+  fs(mid, o) {
+    const txt = t('fsIntro', { n: o.n || '' }); let birds = null; craneSprites();
+    [0, 0.1, 0.2, 0.3].forEach(d => Snd.rustle(0.32, 0.1, 1100, 3600, d / (G.turbo ? 1.6 : 1)));
+    return tfxRun(3.0, 0.92, mid, (c, t, W, H) => {
+      const F = envelopeFlaps(W, H), P = wavesPat(Math.min(W, H));
+      if (t >= 2.1 && !birds) { birds = craneBurst(LITE ? 20 : 34, W, H); Snd.rustle(0.6, 0.12, 2600, 5200); }
+      for (let i = 0; i < 4; i++) { const d0 = 2.1 + (3 - i) * 0.08, pin = eio(seg(t, i * 0.1, i * 0.1 + 0.55)), pout = eio(seg(t, d0, d0 + 0.5)); drawFlap(c, F[i], pin * (1 - pout), W, H, P); }
+      tfxTitle(c, W, H, eob(seg(t, 0.82, 1.3)), seg(t, 2.02, 2.35), txt, tfxImg(MODE_UI.BONUS.img), false);
+      drawBurst(c, birds, t - 2.1, W, H);
+    });
+  },
+  super(mid, o) {
+    const txt = t('fsIntroSuper', { n: o.n || '' }); let gold = null;
+    Snd.rustle(0.8, 0.14, 700, 4200);
+    return tfxRun(3.1, 0.92, mid, (c, t, W, H) => {
+      const m = Math.min(W, H), P = fleckPat(m, 'fan', '#b5302a', ['#e9c25a', '#f6dc8c', '#d9a227'], 30);
+      if (t >= 2.12 && !gold) { gold = goldBurst(LITE ? 24 : 40, W, H); Snd.rustle(0.75, 0.13, 4200, 900); }
+      drawFan(c, W, H, eio(seg(t, 2.15, 2.95)), eio(seg(t, 0, 0.85)), P);
+      tfxTitle(c, W, H, eob(seg(t, 0.82, 1.3)), seg(t, 2.05, 2.38), txt, tfxImg(MODE_UI.SUPER.img), true);
+      drawGold(c, gold, t - 2.12, W, H);
+    });
+  },
+  end(mid) {
+    Snd.rustle(0.5, 0.12, 900, 3000); Snd.rustle(0.5, 0.1, 3000, 900, 1.05 / (G.turbo ? 1.6 : 1));
+    return tfxRun(1.75, 0.64, mid, (c, t, W, H) => {
+      const m = Math.min(W, H), q = eio(seg(t, 0, 0.6)) * (1 - eio(seg(t, 1.08, 1.7)));
+      drawByobu(c, W, H, q, goldLeafPat(m));
+      const k = seg(t, 0.55, 0.85) * (1 - seg(t, 0.98, 1.12)), im = tfxImg(LOGO_SRC);
+      if (k > 0 && im) { const w = Math.min(W * 0.62, m * 1.1), h = w * im.naturalHeight / im.naturalWidth, s = 0.9 + 0.1 * eob(seg(t, 0.55, 0.85)); c.globalAlpha = k; c.shadowColor = 'rgba(70,36,6,0.5)'; c.shadowBlur = m * 0.03; c.shadowOffsetY = m * 0.008; c.drawImage(im, W / 2 - w * s / 2, H / 2 - h * s / 2, w * s, h * s); c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0; c.globalAlpha = 1; }
+    });
+  }
+};
+/* выход с заставки: журавлики стаей пролетают снизу вверх сквозь экран, заставка гаснет за ними */
+function craneStorm(mid) {
+  craneSprites();
+  const rc = app.getBoundingClientRect(), W = rc.width, H = rc.height, m = Math.min(W, H), n = Math.round((W > 700 ? 150 : 110) * (LITE ? 0.7 : 1));
+  const birds = Array.from({ length: n }, () => { const z = Math.random(); return { z, x: rnd(-0.35, 0.95) * W, y: H + m * rnd(0.05, 0.3), t0: rnd(0, 0.6) * (1 - z * 0.4), v: H * (0.9 + 1.5 * z), dx: rnd(0.35, 0.75), s: m * (0.03 + 0.15 * z * z), col: (Math.random() * CRANE_COLORS.length) | 0, ph: rnd(0, 6), sp: rnd(9, 13), wob: rnd(0, TAU) }; }).sort((a, b) => a.z - b.z);
+  Snd.rustle(1.2, 0.2, 1800, 6000); Snd.rustle(0.9, 0.12, 5000, 1500, 0.35);
+  return tfxRun(1.9, 0.5, mid, (c, t) => {
+    const dpr = TFX.dpr;
+    for (const b of birds) {
+      const u = t - b.t0; if (u < 0) continue;
+      const y = b.y - b.v * u; if (y < -b.s * 2) continue;
+      const x = b.x + b.v * b.dx * u + Math.sin(b.wob + u * 4) * m * 0.01, rot = Math.atan2(-1, b.dx) * 0.55;
+      c.globalAlpha = 0.55 + 0.45 * b.z; drawSprite(c, b.col, b.ph + u * b.sp, x, y, b.s, rot, false, dpr);
+    }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalAlpha = 1;
+  }, 80);
+}
+/* --- живая заставка: звёзды мерцают, клин журавликов пролетает, лепестки падают --- */
+const LD = { on: false, cv: null, c: null, W: 0, H: 0, dpr: 1, last: 0, flock: [], next: 0, petals: [], stars: [], strings: [] };
+function splashEnter() {
+  const ld = $('loader'); if (!IDLE.on || ld.hidden) return;
+  ld.classList.add('enter'); craneSprites();
+  if (!LD.cv) { const cv = LD.cv = document.createElement('canvas'); cv.className = 'ld-fx'; cv.setAttribute('aria-hidden', 'true'); ld.insertBefore(cv, ld.querySelector('.ld-logo')); LD.c = cv.getContext('2d'); }
+  LD.on = true; LD.next = performance.now() / 1000 + 1.4; requestAnimationFrame(splashStep);
+}
+function spawnFlock(W, H, m) {
+  const dir = LD.flock.dir = -(LD.flock.dir || -1), port = H > W * 1.05, s = m * rnd(0.036, 0.05), n = Math.random() < 0.5 ? 5 : 7;
+  const y = H * rnd(0.08, port ? 0.22 : 0.3), birds = [];
+  for (let i = 0; i < n; i++) { const row = Math.ceil(i / 2), sd = i % 2 ? -1 : 1; birds.push({ bx: -row * s * 1.9, by: i ? sd * row * s * 1.05 : 0, ph: rnd(0, 6), sp: rnd(7, 9), col: i ? 0 : 1 }); }
+  return { dir, x: dir > 0 ? -s * 4 : W + s * 4, y, s, v: W / rnd(8, 11), birds };
+}
+function splashStep(ms) {
+  if (!LD.on) return;
+  const ld = $('loader'); if (ld.hidden) { LD.on = false; return; }
+  requestAnimationFrame(splashStep);
+  const t = ms / 1000; if (document.hidden || t - LD.last < 1 / 30 - 0.004) return;
+  const dt = LD.last ? Math.min(0.1, t - LD.last) : 0; LD.last = t;
+  const rc = ld.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2), W = Math.round(rc.width), H = Math.round(rc.height), cv = LD.cv, c = LD.c;
+  if (!W || !H) return;
+  if (W !== LD.W || H !== LD.H || dpr !== LD.dpr) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); Object.assign(LD, { W, H, dpr, petals: [], stars: [], strings: ldStrings(W, H) }); }
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const m = Math.min(W, H), port = H > W * 1.05;
+  if (!LD.stars.length) for (let i = 0; i < (LITE ? 10 : 16); i++) LD.stars.push({ x: rnd(0.03, 0.97) * W, y: rnd(0.03, port ? 0.4 : 0.55) * H, r: m * rnd(0.008, 0.016), ph: rnd(0, TAU), bl: rnd(2.2, 4.5) });
+  for (const s of LD.stars) { const a = Math.pow(Math.max(0, Math.sin(TAU * t / s.bl + s.ph)), 3); if (a > 0.02) star4(c, s.x, s.y, s.r * (0.5 + 0.5 * a), a * 0.85, '#fff3c8'); }
+  if (t >= LD.next) { LD.flock.push(spawnFlock(W, H, m)); LD.next = t + rnd(6.5, 9.5); }
+  for (let i = LD.flock.length - 1; i >= 0; i--) {
+    const f = LD.flock[i]; f.x += f.dir * f.v * dt; f.y -= f.v * 0.03 * dt;
+    if ((f.dir > 0 && f.x > W + f.s * 12) || (f.dir < 0 && f.x < -f.s * 12)) { LD.flock.splice(i, 1); continue; }
+    c.globalAlpha = 0.92;
+    for (const b of f.birds) { const x = f.x + f.dir * b.bx, y = f.y + b.by + Math.sin(t * 2.3 + b.ph) * f.s * 0.12; drawSprite(c, b.col, b.ph + t * b.sp, x, y, f.s, f.dir < 0 ? Math.PI : 0, f.dir < 0, dpr); }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalAlpha = 1;
+  }
+  drawStrings(c, LD.strings, t, dpr);
+  if (!LD.petals.length) for (let i = 0; i < (LITE ? 7 : 12); i++) LD.petals.push(ldPetal(W, H, m, true));
+  for (let i = 0; i < LD.petals.length; i++) {
+    const p = LD.petals[i]; p.x += (p.vx + Math.cos(t / p.fl * 2 + p.ph) * p.sw) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+    if (p.y > H + p.r * 2) { LD.petals[i] = ldPetal(W, H, m, false); continue; }
+    const flip = Math.cos(TAU * t / p.fl + p.ph);
+    c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(0.25 + 0.75 * Math.abs(flip), 1); c.globalAlpha = 0.85; drawPetal(p, flip, c); c.restore();
+  }
+}
+/* сэмбадзуру — нити бумажных журавликов свисают по краям заставки, качаются, каждый журавлик медленно поворачивается на нити */
+const STRING_SETS = [[1, 2, 2, 0, 3, 3], [4, 5, 5, 0, 4, 2], [3, 1, 1, 2, 2, 0], [5, 4, 0, 3, 1, 2]];
+function ldStrings(W, H) {
+  const m = Math.min(W, H), port = H > W * 1.05, per = port ? 2 : W > 900 ? 4 : 3, out = [], s = m * (port ? 0.03 : 0.028);
+  for (const side of [-1, 1]) for (let i = 0; i < per; i++) {
+    const x = side < 0 ? W * (0.025 + i * (port ? 0.07 : 0.045)) : W * (0.975 - i * (port ? 0.07 : 0.045)), L = H * (port ? rnd(0.12, 0.22) : rnd(0.32, 0.62)) * (1 - i * 0.12);
+    out.push({ x, L, s: s * (1 - i * 0.08), n: Math.max(3, Math.floor(L / (s * 1.25))), set: STRING_SETS[(i + (side > 0 ? 2 : 0)) % 4], ph: rnd(0, TAU), w: rnd(0.5, 0.8) });
+  }
+  return out;
+}
+function drawStrings(c, S, t, dpr) {
+  const sp = TFX.sprites, su = TFX.su; if (!sp) return;
+  for (const st of S) {
+    const a = 0.035 * Math.sin(t * st.w + st.ph), dx = Math.sin(a), dy = Math.cos(a);
+    c.strokeStyle = 'rgba(241,234,216,0.45)'; c.lineWidth = 1; c.beginPath(); c.moveTo(st.x, 0); c.lineTo(st.x + dx * st.L, dy * st.L); c.stroke();
+    for (let i = 0; i < st.n; i++) {
+      const d = st.s * 0.9 + i * st.s * 1.25, x = st.x + dx * d, y = dy * d, spin = Math.cos(t * 0.6 + i * 0.7 + st.ph), k = st.s / su;
+      c.setTransform(dpr * k * (Math.abs(spin) < 0.18 ? 0.18 * Math.sign(spin || 1) : spin), 0, 0, dpr * k, x * dpr, y * dpr); c.globalAlpha = 0.95;
+      c.drawImage(sp[st.set[i % st.set.length]][1], -su, -su);
+    }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalAlpha = 1;
+    const ex = st.x + dx * (st.L + st.s * 0.4), ey = dy * (st.L + st.s * 0.4);   // бусина и кисточка внизу
+    c.fillStyle = '#e9b63c'; c.beginPath(); c.arc(ex, ey, st.s * 0.16, 0, TAU); c.fill();
+    c.strokeStyle = 'rgba(216,64,47,0.85)'; c.lineWidth = 1.2; c.beginPath(); for (let k = -2; k <= 2; k++) { c.moveTo(ex, ey); c.lineTo(ex + k * st.s * 0.07, ey + st.s * 0.6); } c.stroke();
+  }
+}
+function ldPetal(W, H, m, top) {
+  return { x: rnd(-0.05, 1.05) * W, y: top ? rnd(-0.1, 1) * H : -m * 0.05, vx: rnd(-4, 10), vy: m * rnd(0.03, 0.06), r: m * rnd(0.01, 0.018), rot: rnd(0, TAU), vr: rnd(-0.8, 0.8),
+    ph: rnd(0, TAU), fl: rnd(1.2, 2.6), sw: m * rnd(0.01, 0.03), c: PALETTE.base[(Math.random() * PALETTE.base.length) | 0] };
+}
+
 /* ================= запуск ================= */
 let lastT = now();
 function frame() {
@@ -2574,7 +2980,7 @@ function playIntro() {
 /* Заставка: три доски с фичами на разной высоте, качаются. Когда всё загружено — «Press to continue»; тап запускает звук и музыку. */
 function buildSplash() {
   const planks = [['BONUS', 'fsName', 'fsText', '0vmin', '4.2s', '0s'], ['SUPER', 'superName', 'superText', '6vmin', '5.1s', '-1.7s'], ['ANTE', 'anteName', 'anteText', '2.5vmin', '4.7s', '-3.1s']];
-  $('ldPlanks').innerHTML = planks.map(([m, name, text, drop, sd, sdl]) => '<div class="ld-plank" style="--drop:' + drop + ';--rope:' + drop + ';--sd:' + sd + ';--sdl:' + sdl + '">' +
+  $('ldPlanks').innerHTML = planks.map(([m, name, text, drop, sd, sdl], i) => '<div class="ld-plank" style="--i:' + i + ';--drop:' + drop + ';--rope:' + drop + ';--sd:' + sd + ';--sdl:' + sdl + '">' +
     '<div class="board"><img src="' + MODE_UI[m].img + '" alt=""><b>' + t(name) + '</b><span>' + t(text, { mult: CONFIG.modes.ANTE.cost }) + '</span></div></div>').join('');
 }
 function waitForTap() {
@@ -2584,7 +2990,13 @@ function waitForTap() {
     ld.onclick = go; document.addEventListener('keydown', go);
   });
 }
-function hideLoader() { $('loader').classList.add('done'); setTimeout(() => { $('loader').hidden = true; }, 450); }
+function ldProgress(p) { $('ldFill').style.width = Math.round(p * 100) + '%'; $('ldBar').style.setProperty('--p', p); }
+/* тап по заставке: стая журавликов пролетает сквозь экран, заставка гаснет за ней (без анимаций — просто гаснет) */
+function hideLoader() {
+  const ld = $('loader'), go = () => { ld.classList.add('done'); setTimeout(() => { ld.hidden = true; LD.on = false; }, 450); };
+  tfxPrep();
+  if (IDLE.on && !ld.hidden) craneStorm(go); else go();
+}
 
 async function boot() {
   if (!window.I18N) console.error('Не загрузился файл: assets/i18n.js');
@@ -2597,13 +3009,14 @@ async function boot() {
   G.music = store('music') !== '0'; G.sfx = store('sfx') !== '0'; G.space = store('space') !== '0';
   bindUi(); applyTexts(); setWin(0); layout(); buildSplash();
   const intro = PARAM.replay ? Promise.resolve() : playIntro();
+  intro.then(splashEnter);
   const init = Array.from({ length: CONFIG.reels }, (_, i) => Array.from({ length: CONFIG.rows }, (_, r) => SYM_ORDER[(i * 3 + r * 2 + (i === 2 ? 1 : 0)) % SYM_ORDER.length]));
   init[1][2] = 'W'; init[3][1] = 'W';
   G.board = init; R.reels = init.map((col, i) => makeReel(i, col)); R.mults = new Map([['1,2', 2], ['3,1', 3]]);
   if (PARAM.replay) { await bootReplay(); return; }
   let auth;
   try {
-    const [a] = await Promise.all([backend.authenticate(), loadAssets(p => { $('ldFill').style.width = Math.round(p * 100) + '%'; }), intro]);
+    const [a] = await Promise.all([backend.authenticate(), loadAssets(ldProgress), intro]);
     auth = a;
   } catch (e) {
     console.error(e);
