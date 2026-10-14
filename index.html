@@ -359,6 +359,40 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 .pill.sel{background:var(--ink);color:var(--paper)}
 .pill.go{background:var(--hanko);border-color:var(--hanko);color:var(--paper)}
 .pill:disabled{opacity:.4;cursor:default}
+/* v23: бумажные кнопки — SVG-«кожа» из кода (см. skinAll): грани сгибов, кант с золотом, волны; цвета — --k бумага, --kr кант, --ke золото.
+   Селектор кожи с id внутри :is — сильнее, чем #btnSpin svg и .sq:has(.cap.two) svg, которые задают размер иконкам */
+.sk{--k:#2b4497;--kr:#f3ead6;--ke:#d7ae4f}
+.facet.sk::before{content:none}
+.facet.sk,.sq.sk,.x.sk,#infoClose.sk{filter:none;background:none}
+:is(#btnSpin,#infoClose,.facet,.sq,.x)>svg.skin{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
+.sq.sk>:not(.skin){position:relative;z-index:1}
+.sk-face{transform-box:view-box;transform-origin:50% 50%;transition:transform .09s ease-out}   /* вертушка и блик крутятся атрибутом transform — им origin не задаём */
+.sk-dim{opacity:0;transition:opacity .09s}
+.sk-hl{opacity:0;transition:opacity .2s}
+button.sk:active:not(:disabled) .sk-face{transform:scale(.95)}
+button.sk:active:not(:disabled) .sk-dim{opacity:.2}
+@media (hover:hover){button.sk:hover:not(:disabled) .sk-hl{opacity:.8}}
+.sk .ico{filter:drop-shadow(0 .05em 0 rgba(5,8,24,.45))}
+#btnSpin.sk{--k:#1f9a5e}
+#btnSpin.sk.busy .ico-spin{animation:none}
+#btnBonus.sk{--k:#cf3b2a}
+.facet.sk.on,#btnBonus.sk.on{--k:#dba73a;--ke:#f6d27a}
+.facet.sk.on .ico{filter:brightness(.22)}
+#btnSound.sk{--k:#1f9a5e;filter:none}
+#btnSound.sk.off{--k:#5d6480;--ke:#aaa18c;filter:brightness(.9)}
+.x.sk{transition:transform .2s}
+.x.sk .x-ico,#infoClose.sk svg:not(.skin){position:absolute;left:24%;top:24%;width:52%;height:52%;display:block;z-index:1;fill:none;stroke:var(--paper);stroke-width:3.4;stroke-linecap:round}
+.sq.sk:active:not(:disabled){background:none}
+/* кнопки в окнах — бумажные талоны с загнутым золотым уголком (как у табличек), выбранный — индиго с золотой каймой, главное действие — красный */
+.pill{position:relative;border:0;background:linear-gradient(180deg,#fcf7ea,#efe4c9);color:var(--ink);
+  box-shadow:inset 0 0 0 2px var(--ink),inset 0 -.2em 0 rgba(23,34,77,.16);clip-path:polygon(0 0,calc(100% - .55em) 0,100% .55em,100% 100%,0 100%);
+  transition:transform .08s ease-out}
+.pill::after{content:"";position:absolute;right:0;top:0;width:.55em;height:.55em;pointer-events:none;background:linear-gradient(225deg,transparent 50%,var(--gold) 50%,var(--gold-deep))}
+.pill.sel{background:linear-gradient(180deg,#3653a6,#22377c);color:var(--paper);box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 3.5px rgba(233,182,60,.8),inset 0 -.2em 0 rgba(5,8,24,.25)}
+.pill.go{background:linear-gradient(180deg,#e65c46,#c3321f);border:0;color:var(--paper);text-shadow:0 .06em 0 #7d1f17;
+  box-shadow:inset 0 0 0 2px #8f2316,inset 0 0 0 3.5px rgba(246,210,122,.85),inset 0 -.2em 0 rgba(5,8,24,.22)}
+.pill:active:not(:disabled){transform:translateY(.08em)}
+@media (hover:hover){.pill:hover:not(:disabled):not(.sel){background:linear-gradient(180deg,#fffaf0,#f5ebd3)}.pill.go:hover:not(:disabled){background:linear-gradient(180deg,#ee6b54,#cf3a26)}}
 .row{display:flex;flex-wrap:wrap;gap:.6em;justify-content:flex-end}
 .row.center{justify-content:center}
 #autoModal h3{margin:.9em 0 .1em;font:800 .95em/1.25 var(--font-ui);color:var(--indigo);letter-spacing:0}
@@ -739,10 +773,7 @@ const ASSETS = {
   },
   preload: ['assets/ui/paper.webp?v=15', 'assets/ui/mode_ante.webp?v=15', 'assets/ui/mode_bonus.webp?v=15', 'assets/ui/mode_super.webp?v=15',
     'assets/ui/frame_base.webp?v=15', 'assets/ui/logo.webp?v=15', 'assets/ui/icons.webp?v=15', 'assets/ui/tag_value.webp?v=15', 'assets/ui/tag_win.webp?v=15', 'assets/ui/tag_fs.webp?v=15',
-    'assets/ui/hud_mult.webp?v=15', 'assets/ui/plank_body.webp?v=15', 'assets/ui/btn_spin.webp?v=15', 'assets/ui/btn_spin_down.webp?v=15', 'assets/ui/btn_round.webp?v=15',
-    'assets/ui/btn_round_down.webp?v=15', 'assets/ui/btn_round_on.webp?v=15', 'assets/ui/btn_round_on_down.webp?v=15', 'assets/ui/btn_menu.webp?v=15', 'assets/ui/btn_menu_down.webp?v=15',
-    'assets/ui/btn_bonus.webp?v=15', 'assets/ui/btn_bonus_down.webp?v=15', 'assets/ui/btn_ante_on.webp?v=15', 'assets/ui/btn_ante_on_down.webp?v=15', 'assets/ui/btn_close.webp?v=15',
-    'assets/ui/toggle_on.webp?v=15', 'assets/ui/toggle_off.webp?v=15'],
+    'assets/ui/hud_mult.webp?v=15', 'assets/ui/plank_body.webp?v=15', 'assets/ui/toggle_on.webp?v=15', 'assets/ui/toggle_off.webp?v=15'],
   // после старта, в фоне: рамки и фоны фриспинов (нужны только при входе в бонус)
   later: ['assets/ui/frame_fs.webp?v=15', 'assets/ui/frame_super.webp?v=15'],
   fx: { coin: 'assets/ui/coin.webp?v=15', coinEdge: 'assets/ui/coin_edge.webp?v=15', sticky: 'assets/ui/sticky_cell.webp?v=15' },
@@ -3071,6 +3102,103 @@ function updateLogo(t) {
   logoDraw(LG.game, t);
 }
 
+/* ================= v23: бумажные кнопки ================= */
+/* Кнопки — сложенная бумага, нарисованная кодом (SVG, картинки btn_*.webp не нужны): кремовый кант с двойной золотой каймой,
+   грани сгибов светлее или темнее по свету слева сверху, волны сэйгайха на середине. Круглые — восьмиугольная «звезда» из 16 граней;
+   Spin — медальон-вертушка (кадзагурума): пока идут барабаны, она раскручивается, а потом встаёт ровно; раз в 7 с по ней проходит блик.
+   Квадратные — конверт из четырёх клапанов с загнутым золотым уголком, как у табличек. Цвета — переменные: --k (бумага), --kr (кант), --ke (золото).
+   Нажатие вдавливает грани, наведение мышью подсвечивает кант. */
+const SKN = { L: Math.atan2(-0.8, -0.6), wheel: null, shine: null, spin: null, ang: 0, vel: 0, goal: null, sh: false };
+const skP = a => a.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' ');
+const skRing = (n, r, a0) => Array.from({ length: n }, (_, k) => { const a = a0 + TAU * k / n; return [50 + r * Math.cos(a), 50 + r * Math.sin(a)]; });
+const skOct = r => skRing(8, r, -Math.PI / 2 + Math.PI / 8);   // восьмиугольник с ровным верхом
+const skDown = (a, d) => a.map(([x, y]) => [x, y + d]);
+function skFacet(pts, dir, k) {   // грань: бумага --k и поверх белая или тёмная плёнка по углу к свету
+  const b = Math.cos(dir - SKN.L) * k, p = skP(pts);
+  return `<polygon points="${p}" style="fill:var(--k)"/>` + (Math.abs(b) > 0.03 ? `<polygon points="${p}" fill="${b > 0 ? '#fff' : '#050818'}" fill-opacity="${(Math.abs(b) * (b > 0 ? 0.24 : 0.32)).toFixed(3)}"/>` : '');
+}
+function skRim(outer, inner) {   // тень, кремовый кант, двойная золотая кайма, подсветка при наведении
+  const o = skP(outer);
+  return `<polygon points="${skP(skDown(outer, 5))}" fill="#050818" fill-opacity=".16"/><polygon points="${skP(skDown(outer, 3))}" fill="#050818" fill-opacity=".36"/>` +
+    `<polygon points="${o}" style="fill:var(--kr);stroke:var(--ke)" stroke-width="1.6" stroke-linejoin="round"/><polygon points="${o}" fill="url(#skRimG)"/>` +
+    `<polygon points="${skP(inner)}" fill="none" style="stroke:var(--ke)" stroke-width=".9" stroke-opacity=".9"/>` +
+    `<polygon class="sk-hl" points="${o}" fill="none" stroke="#fff6d0" stroke-width="2.4" stroke-linejoin="round"/>`;
+}
+function skinOct(spin) {
+  const F = skOct(42), f = skP(F);
+  // viewBox по ширине восьмиугольника (88.7 «от грани до грани» + кайма), чтобы он, как прежние картинки, занимал кнопку целиком
+  let s = `<svg class="skin" viewBox="4.75 4.75 90.5 90.5" aria-hidden="true" focusable="false">` + skRim(skOct(48), skOct(44.6)) + `<g class="sk-face"><polygon points="${f}" style="fill:var(--k)"/>`;
+  if (!spin) {   // звезда: 8 граней наружу и 8 «долин» между ними, середина — восьмиугольник с волнами
+    const a0 = -Math.PI / 2 + Math.PI / 8, I = skRing(8, 25, a0 + Math.PI / 8);
+    for (let k = 0; k < 8; k++) {
+      const m = a0 + Math.PI / 8 + k * Math.PI / 4;
+      s += skFacet([F[k], F[(k + 1) % 8], I[k]], m, 1) + skFacet([I[k], F[(k + 1) % 8], I[(k + 1) % 8]], m + Math.PI / 4 + Math.PI, 0.55);
+    }
+    const ip = skP(I);
+    s += `<polygon points="${ip}" fill="#050818" fill-opacity=".1"/><polygon points="${ip}" fill="url(#skWave)"/><polygon points="${ip}" fill="none" style="stroke:var(--ke)" stroke-width=".8" stroke-opacity=".6"/>`;
+    s += `<path d="${F.map((p, k) => `M${p[0].toFixed(2)} ${p[1].toFixed(2)}L${I[k][0].toFixed(2)} ${I[k][1].toFixed(2)}L${F[(k + 1) % 8][0].toFixed(2)} ${F[(k + 1) % 8][1].toFixed(2)}`).join('')}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".55"/>`;
+  } else {   // вертушка: 16 лопастей с закруткой вращаются внутри золотого кольца, середина неподвижна
+    s += `<polygon points="${f}" fill="#050818" fill-opacity=".28"/><circle cx="50" cy="50" r="39.6" fill="none" style="stroke:var(--ke)" stroke-width="1.6"/><g class="sk-wheel">`;
+    const st = TAU / 16, O = skRing(16, 38, 0), I = skRing(16, 21, st * 0.5 + st * 0.55);
+    for (let k = 0; k < 16; k++) {
+      const m = k * st + st * 0.5;
+      s += skFacet([O[k], O[(k + 1) % 16], I[k]], m + 0.5, 1.35) + skFacet([I[k], O[(k + 1) % 16], I[(k + 1) % 16]], m + Math.PI - 0.3, 0.8);
+    }
+    s += `<path d="${O.map((p, k) => `M${p[0].toFixed(2)} ${p[1].toFixed(2)}L${I[k][0].toFixed(2)} ${I[k][1].toFixed(2)}`).join('')}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width=".5"/></g><circle cx="50" cy="50" r="21.5" style="fill:var(--k)"/><circle cx="50" cy="50" r="21.5" fill="#050818" fill-opacity=".12"/><circle cx="50" cy="50" r="21.5" fill="url(#skWave)"/>` +
+      `<circle cx="50" cy="50" r="21.5" fill="none" style="stroke:var(--ke)" stroke-width="1.2"/>` +
+      `<g clip-path="url(#skOctC)"><rect class="sk-shine" x="-40" y="-20" width="24" height="140" fill="url(#skShine)" transform="translate(-80 0)"/></g>`;
+  }
+  return s + `<polygon points="${f}" fill="url(#skGloss)"/><polygon class="sk-dim" points="${f}" fill="#050818"/><polygon points="${f}" fill="none" stroke="#050818" stroke-opacity=".35" stroke-width=".8"/></g></svg>`;
+}
+const SK_SQ_RIM = [[10, 2], [76, 2], [98, 24], [98, 90], [90, 98], [10, 98], [2, 90], [2, 10]];   // угол справа сверху загнут
+const SK_SQ_IN = [[11.8, 6.4], [74.2, 6.4], [93.6, 25.8], [93.6, 88.2], [88.2, 93.6], [11.8, 93.6], [6.4, 88.2], [6.4, 11.8]];
+const SK_SQ_FACE = [[15, 10], [72, 10], [90, 28], [90, 85], [85, 90], [15, 90], [10, 85], [10, 15]];
+function skinSq() {   // конверт: клапаны снизу, слева, справа и сверху (верхний — поверх, с тенью), загнутый золотой уголок
+  const f = skP(SK_SQ_FACE), fl = (pts, dir, k, dx, dy) => (dx || dy ? `<polygon points="${skP(pts.map(([x, y]) => [x + dx, y + dy]))}" fill="#050818" fill-opacity=".26"/>` : '') + skFacet(pts, dir, k);
+  return `<svg class="skin" viewBox="0 0 100 100" aria-hidden="true" focusable="false">` + skRim(SK_SQ_RIM, SK_SQ_IN) +
+    `<g class="sk-face"><polygon points="${f}" style="fill:var(--k)"/><g clip-path="url(#skSqC)">` +
+    fl([[10, 90], [90, 90], [50, 44]], Math.PI / 2, 0.8) + fl([[10, 10], [10, 90], [56, 50]], Math.PI, 0.7, 1.2, 0) + fl([[90, 10], [90, 90], [44, 50]], 0, 0.7, -1.2, 0) +
+    fl([[10, 10], [90, 10], [50, 57]], -Math.PI / 2, 0.9, 0, 1.6) + `<polygon points="${f}" fill="url(#skWave)"/></g>` +
+    `<polygon points="${f}" fill="url(#skGloss)"/><polygon class="sk-dim" points="${f}" fill="#050818"/><polygon points="${f}" fill="none" stroke="#050818" stroke-opacity=".35" stroke-width=".8"/></g>` +
+    `<polygon points="75,2.6 97.4,25 75,25" fill="#050818" fill-opacity=".3" transform="translate(-1.2 1.6)"/><polygon points="76,2 98,24 76,24" fill="url(#skEar)" style="stroke:var(--ke)" stroke-width=".6" stroke-linejoin="round"/></svg>`;
+}
+function skinAll() {
+  if (!document.getElementById('skDefs')) document.body.insertAdjacentHTML('afterbegin',
+    `<svg id="skDefs" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden"><defs>` +
+    `<linearGradient id="skGloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset=".46" stop-color="#fff" stop-opacity=".04"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#050818" stop-opacity=".2"/></linearGradient>` +
+    `<linearGradient id="skRimG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#6b5530" stop-opacity=".4"/></linearGradient>` +
+    `<linearGradient id="skShine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff6d6" stop-opacity="0"/><stop offset=".5" stop-color="#fff6d6" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d6" stop-opacity="0"/></linearGradient>` +
+    `<linearGradient id="skEar" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#a8771f"/><stop offset=".5" stop-color="#e9b63c"/><stop offset="1" stop-color="#fff0bd"/></linearGradient>` +
+    `<pattern id="skWave" width="12" height="6" patternUnits="userSpaceOnUse"><g fill="none" stroke="#fff" stroke-opacity=".15" stroke-width=".6"><path d="M0 6a6 6 0 0 1 12 0M2 6a4 4 0 0 1 8 0M4 6a2 2 0 0 1 4 0M-6 3a6 6 0 0 1 12 0M6 3a6 6 0 0 1 12 0"/></g></pattern>` +
+    `<clipPath id="skOctC"><polygon points="${skP(skOct(42))}"/></clipPath><clipPath id="skSqC"><polygon points="${skP(SK_SQ_FACE)}"/></clipPath></defs></svg>`);
+  const oct = skinOct(false), wheel = skinOct(true), sq = skinSq();
+  document.querySelectorAll('.facet, .sq, .x, #infoClose').forEach(b => {
+    if (b.classList.contains('sk')) return;
+    b.insertAdjacentHTML('afterbegin', b.id === 'btnSpin' ? wheel : b.classList.contains('sq') ? sq : oct);
+    if (b.classList.contains('x')) b.insertAdjacentHTML('beforeend', '<svg class="x-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>');
+    b.classList.add('sk');
+  });
+  SKN.spin = $('btnSpin'); SKN.wheel = SKN.spin.querySelector('.sk-wheel'); SKN.shine = SKN.spin.querySelector('.sk-shine');
+}
+/* вертушка Spin: разгон, пока идут барабаны; потом пружиной встаёт на ближайшую лопасть. Блик — только в покое. Пишем в DOM, только когда что-то движется. */
+function updateSkins(dt, t) {
+  const w = SKN.wheel; if (!w) return;
+  const b = SKN.spin, busy = b.classList.contains('busy') || b.classList.contains('auto');
+  if (!reduceMotion) {
+    let moved = true;
+    if (busy) { SKN.vel += ((G.turbo ? 520 : 330) - SKN.vel) * Math.min(1, dt * 2.5); SKN.ang += SKN.vel * dt; SKN.goal = null; }
+    else if (SKN.vel !== 0 || SKN.goal != null) {
+      if (SKN.goal == null) SKN.goal = Math.ceil((SKN.ang + SKN.vel * 0.3) / 22.5) * 22.5;
+      const d = SKN.goal - SKN.ang; SKN.vel += (d * 38 - SKN.vel * 10) * dt; SKN.ang += SKN.vel * dt;
+      if (Math.abs(d) < 0.05 && Math.abs(SKN.vel) < 2) { SKN.ang = SKN.goal % 360; SKN.vel = 0; SKN.goal = null; }
+    } else moved = false;
+    if (moved) w.setAttribute('transform', `rotate(${(SKN.ang % 360).toFixed(2)} 50 50)`);
+  }
+  const sh = SKN.shine, ph = (t % 7) / 1.1, on = IDLE.on && ph < 1 && !busy && !b.disabled;
+  if (on) { sh.setAttribute('transform', `translate(${(-20 + 160 * eio(ph)).toFixed(1)} 0) rotate(18 50 50)`); SKN.sh = true; }
+  else if (SKN.sh) { sh.setAttribute('transform', 'translate(-80 0)'); SKN.sh = false; }
+}
+
 /* ================= запуск ================= */
 let lastT = now();
 function frame() {
@@ -3078,7 +3206,7 @@ function frame() {
   updateReels(dt, tt); updateShow(tt);
   if (IDLE.on && G.ready && !document.hidden && tt - IDLE.last >= 1 / IDLE.fps - 0.004) { IDLE.last = tt; R.dirty = true; }   // idle-анимации символов, 30 к/с
   if (R.dirty) { R.dirty = false; drawBoard(tt); }
-  updateFx(dt, tt); updateScene(tt);
+  updateFx(dt, tt); updateScene(tt); updateSkins(dt, tt);
   requestAnimationFrame(frame);
 }
 
@@ -3228,6 +3356,7 @@ window.__game = {
   force(seed) { DEMO.forced = seed >>> 0; }, queue(seeds) { DEMO.queue = seeds.map(s => s >>> 0); }, spin, config: CONFIG, paytable: PAYTABLE,
   t, money, readWins: ev => readWins(ev, false).map(w => ({ money: w.money, noLabel: w.noLabel, cells: w.cells.length })), retext: () => { applyTexts(); updateButtons(); }, dict: () => Object.assign({}, I18N.en, DICT), legal: LEGAL
 };
+skinAll();
 boot();
 })();
 </script>
