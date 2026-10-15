@@ -48,17 +48,19 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const NB_EDGES = [0.005, 2, 10, 50, 200, 1000];
 const NB_QUOTA = [250000, 90000, 40000, 15000, 4000, 800, 200];
 // Раунды с бонусом: пять корзин по итогу раунда + отдельная страта «потолок»
-const T_EDGES = { BONUS: [20, 100, 500, 2000], SUPER: [50, 200, 1000, 4000] };
-const T_SHARE = { BONUS: [0.30, 0.33, 0.25, 0.08, 0.04], SUPER: [0.20, 0.35, 0.30, 0.10, 0.05] };
+const T_EDGES = { BONUS: [20, 100, 500, 2000], SUPER: [50, 200, 1000, 4000], LANTERN: [20, 75, 300, 1500], FOLD: [30, 150, 600, 3000] };
+const T_SHARE = { BONUS: [0.30, 0.33, 0.25, 0.08, 0.04], SUPER: [0.20, 0.35, 0.30, 0.10, 0.05], LANTERN: [0.25, 0.33, 0.27, 0.10, 0.05], FOLD: [0.25, 0.33, 0.27, 0.10, 0.05] };
 const MODES = {
   base:  { engine: 'BASE',  profile: 'base', forced: 'BONUS', pool: 0, nbScan: 200e6, t: { 3: 51000, 4: 7500, 5: 1000, cap: 500 } },
   ante2: { engine: 'ANTE2', profile: 'ante2', forced: 'BONUS', pool: 1, nbScan: 200e6, t: { 3: 51000, 4: 7500, 5: 1000, cap: 500 } },
   ante4: { engine: 'ANTE4', profile: 'ante4', forced: 'BONUS', pool: 2, nbScan: 200e6, t: { 3: 51000, 4: 7500, 5: 1000, cap: 500 } },
   bonus: { engine: 'BONUS', profile: 'base', forced: 'BONUS', pool: 3, t: { 3: 86000, 4: 12000, 5: 1500, cap: 500 } },
-  super: { engine: 'SUPER', profile: 'base', forced: 'SUPER', pool: 0, t: { 3: 77000, 4: 11000, 5: 1500, cap: 500 } }
+  super: { engine: 'SUPER', profile: 'base', forced: 'SUPER', pool: 0, t: { 3: 77000, 4: 11000, 5: 1500, cap: 500 } },
+  lantern: { engine: 'LANTERN', profile: 'base', forced: 'LANTERN', pool: 0, t: { 3: 50000, 4: 8000, 5: 1200, cap: 500 } },
+  fold:  { engine: 'FOLD',  profile: 'base', forced: 'FOLD',  pool: 0, t: { 3: 55000, 4: 8500, 5: 1200, cap: 400 } }
 };
-const FORCED_SCAN = { BONUS: 56e6, SUPER: 16e6 };   // сколько раундов с гарантированным входом сканируем
-const POOLS = { BONUS: 4, SUPER: 1 };               // сиды BONUS делятся на четыре набора: base, ante2, ante4, bonus
+const FORCED_SCAN = { BONUS: 56e6, SUPER: 16e6, LANTERN: 20e6, FOLD: 24e6 };   // сколько раундов с гарантированным входом сканируем
+const POOLS = { BONUS: 4, SUPER: 1, LANTERN: 1, FOLD: 1 };               // сиды BONUS делятся на четыре набора: base, ante2, ante4, bonus
 
 const bucketOf = (edges, x) => { let b = 0; while (b < edges.length && x >= edges[b]) b++; return b; };
 function forcedQuotas(forced, size) {   // квоты книг по стратам для каждого набора сидов
@@ -279,7 +281,7 @@ async function pool(jobs, width) {   // не больше width задач од�
 /* ---- 1. скан ---- */
 const scanDefs = [];
 for (const name of ['base', 'ante2', 'ante4']) scanDefs.push({ id: name, kind: 'nb', mode: MODES[name].engine, total: Math.round(MODES[name].nbScan * SCAN), quotas: [Object.fromEntries(NB_QUOTA.map((q, b) => ['n' + b, Math.max(1, Math.round(q * SIZE))]))] });
-for (const forced of ['BONUS', 'SUPER']) scanDefs.push({ id: forced, kind: 'forced', mode: forced, total: Math.round(FORCED_SCAN[forced] * SCAN), quotas: forcedQuotas(forced, SIZE) });
+for (const forced of Object.keys(FORCED_SCAN)) scanDefs.push({ id: forced, kind: 'forced', mode: forced, total: Math.round(FORCED_SCAN[forced] * SCAN), quotas: forcedQuotas(forced, SIZE) });
 const PARTS = Math.max(2, JOBS), scanJobs = [];
 for (const d of scanDefs) for (let p = 0; p < PARTS; p++) {
   const from = Math.floor(d.total * p / PARTS) + 1, to = Math.floor(d.total * (p + 1) / PARTS);

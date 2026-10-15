@@ -34,6 +34,8 @@ const WANT = {
   ante2: [['бонус, 4 скаттера', b => fsTotal(b) === 10 && !has(b, 'wincap') && !has(b, 'retrigger')], ['пустой раунд', b => b.payoutMultiplier === 0]],
   ante4: [['бонус, 3 скаттера', b => fsTotal(b) === 8 && !has(b, 'wincap')], ['выигрыш по линиям', b => !has(b, 'freeSpinTrigger') && b.payoutMultiplier >= 300]],
   bonus: [['бонус, 5 скаттеров', b => fsTotal(b) === 12 && !has(b, 'wincap')], ['бонус без выигрыша', b => b.payoutMultiplier === 0], ['потолок', b => has(b, 'wincap')]],
+  lantern: [['фонари линий с ретриггером', b => has(b, 'retrigger') && has(b, 'lanternUpdate') && !has(b, 'wincap')], ['потолок', b => has(b, 'wincap')]],
+  fold: [['сгиб, крупный выигрыш', b => has(b, 'fold') && !has(b, 'wincap') && b.payoutMultiplier >= 50000], ['потолок', b => has(b, 'wincap')]],
   super: [['супербонус', b => !has(b, 'wincap') && b.payoutMultiplier >= 20000 && b.payoutMultiplier <= 60000], ['потолок', b => has(b, 'wincap')]]
 };
 async function pick(name) {
@@ -109,13 +111,13 @@ for (const name of Object.keys(picked)) for (const w of picked[name]) {
   const tag = `${name} / ${w.label} (id ${w.book.id})`, feMode = name.toUpperCase(), before = S.balance, t0 = Date.now();
   S.next = w.book;
   // base и ante — обычное вращение (анте включён через меню бонус-режимов), bonus и super — покупка
-  await page.evaluate(m => { window.__game.spin(m === 'BONUS' || m === 'SUPER' ? m : undefined); }, feMode).catch(e => bad(tag, e.message));
+  await page.evaluate(m => { window.__game.spin(['BONUS', 'SUPER', 'LANTERN', 'FOLD'].includes(m) ? m : undefined); }, feMode).catch(e => bad(tag, e.message));
   await page.waitForFunction(() => window.__game.busy, null, { timeout: 5000 }).catch(() => bad(tag, 'раунд не начался'));
   await page.waitForFunction(() => !window.__game.busy, null, { timeout: 600000 }).catch(() => bad(tag, 'раунд не закончился за 10 минут'));
   await page.waitForTimeout(250);
   const st = await page.evaluate(() => window.__game.state), sent = S.log[S.log.length - 1] || {};
   const win = Math.round(BET * w.book.payoutMultiplier / 100), cost = Math.round(BET * modes[name].cost);
-  if (String(sent.mode) !== feMode || sent.amount !== BET) bad(tag, `запрос play: mode ${sent.mode}, amount ${sent.amount}`);
+  if (String(sent.mode) !== name || sent.amount !== BET) bad(tag, `запрос play: mode ${sent.mode}, amount ${sent.amount}`);
   if (st.win !== win) bad(tag, `на экране ${st.win / U}, в книге ${win / U}`);
   if (st.balance !== S.balance || S.balance !== before - cost + win) bad(tag, `баланс ${st.balance / U}, ожидался ${(before - cost + win) / U}`);
   if (st.fs || st.sticky) bad(tag, 'после раунда остался режим фриспинов');

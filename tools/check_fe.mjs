@@ -464,7 +464,7 @@ await run('ui', async () => {
     if (JSON.stringify(order) !== JSON.stringify(want)) bad('правила', 'порядок разделов: ' + order.join(' / '));
     const last = await page.evaluate(() => document.querySelector('#infoSheet > :last-child').textContent);
     if (!last.startsWith('Malfunction voids all wins and plays.') || !/TM and © \d{4} Engine\.$/.test(last)) bad('правила', 'юридический текст не в самом низу: ' + last.slice(0, 60));
-    for (const need of ['Lands on reels 2, 3, 4', '×2, ×3, ×5', '×2, ×3, ×5, ×10', 'at most 40 free spins', 'once in 197 spins instead of once in 400', '15,000× the bet amount', 'one line can reach ×1,000'])
+    for (const need of ['Lands on reels 2, 3, 4', '×2, ×3, ×5', '×2, ×3, ×5, ×10', 'at most 40 free spins', 'once in 80 spins instead of once in 400', 'once in 32 spins instead of once in 400', '15,000× the bet amount', 'one line can reach ×1,000'])
       if (!info.includes(need)) bad('правила', 'нет «' + need + '»');
     const shots = await page.evaluate(() => [document.querySelectorAll('#infoSheet .ipay tr').length - 1, document.querySelectorAll('#infoSheet .ilines figure').length, document.querySelectorAll('#infoSheet .itbl').length]);
     if (shots[0] !== 8 || shots[1] !== 5 || shots[2] !== 2) bad('правила', 'таблица выплат / схема линий / таблицы фриспинов: ' + shots.join(' / '));
@@ -507,18 +507,18 @@ await run('ui', async () => {
     const cards = await page.evaluate(() => Array.from(document.querySelectorAll('#modeCards .modecard')).map(c => ({ mode: c.dataset.mode, plank: c.classList.contains('plank'), img: c.querySelector('img').naturalWidth > 0 && /mode_/.test(c.querySelector('img').src),
       name: c.querySelector('b').textContent, desc: c.querySelector('.desc').textContent.length > 10, vol: c.querySelector('.vol').textContent, bars: c.querySelectorAll('.bars i.f').length + '/' + c.querySelectorAll('.bars i').length,
       price: c.querySelector('.price').childNodes[0].textContent, cur: c.querySelector('.price small').textContent, btn: (c.querySelector('button span') || c.querySelector('button')).textContent, dis: c.querySelector('button').disabled, why: (c.querySelector('.why') || {}).textContent || '' })));
-    const wantCards = [['ANTE', 'Ante', '2× / 4×', '$2.00 / $4.00', 'Activate'], ['BONUS', 'Free spins', '100×', '$100.00', 'Buy'], ['SUPER', 'Super free spins', '300×', '$300.00', 'Buy']];
-    if (cards.length !== 3) bad('бонус-меню', 'досок не три: ' + cards.length);
+    const wantCards = [['ANTE', 'Ante', '2× / 4×', '$2.00 / $4.00', 'Activate'], ['BONUS', 'Free spins', '100×', '$100.00', 'Buy'], ['SUPER', 'Super free spins', '300×', '$300.00', 'Buy'], ['LANTERN', 'Lantern spins', '75×', '$75.00', 'Buy'], ['FOLD', 'Fold spins', '150×', '$150.00', 'Buy']];
+    if (cards.length !== wantCards.length) bad('бонус-меню', 'досок не ' + wantCards.length + ': ' + cards.length);
     cards.forEach((c, i) => { const w = wantCards[i]; if (!w || c.mode !== w[0] || c.name !== w[1] || c.price !== w[2] || c.cur !== w[3] || c.btn !== w[4] || !c.plank || !c.img || !c.desc || c.vol !== 'VolatilityHigh' || c.bars !== '4/5' || c.dis || c.why) bad('бонус-меню', 'доска ' + i + ': ' + JSON.stringify(c)); });
     if (await text(page, '#bmBetVal') !== '$1.00' || await text(page, '#bonusModal h2') !== 'Bonus modes') bad('бонус-меню', 'шапка: ' + await text(page, '#bonusModal h2') + ' / ' + await text(page, '#bmBetVal'));
     await page.click('#bmBetUp'); await page.waitForTimeout(100);
     const p2 = await page.evaluate(() => Array.from(document.querySelectorAll('#modeCards .price small')).map(e => e.textContent).join());
-    if (p2 !== '$4.00 / $8.00,$200.00,$600.00' || await text(page, '#bmBetVal') !== '$2.00' || (await state(page)).bet !== 2 * U) bad('бонус-меню', 'ставка + в меню: ' + p2);
+    if (p2 !== '$4.00 / $8.00,$200.00,$600.00,$150.00,$300.00' || await text(page, '#bmBetVal') !== '$2.00' || (await state(page)).bet !== 2 * U) bad('бонус-меню', 'ставка + в меню: ' + p2);
     await page.click('#bmBetDown');
     // анте включён — покупки недоступны, с подписью почему
     await page.click('#anteANTE2'); await page.waitForTimeout(150); await shot(page, 'ui_bonus_locked');
-    const lock = await page.evaluate(() => ({ ante: document.querySelector('#anteANTE2 > span').textContent, b: document.getElementById('buyBONUS').disabled, s: document.getElementById('buySUPER').disabled, why: Array.from(document.querySelectorAll('#modeCards .why')).map(e => e.textContent) }));
-    if (lock.ante !== 'Deactivate' || !lock.b || !lock.s || lock.why.length !== 2 || lock.why[0] !== 'Bonus buys are unavailable while Ante is on. Deactivate Ante first.') bad('бонус-меню', 'при анте покупки должны быть закрыты: ' + JSON.stringify(lock));
+    const lock = await page.evaluate(() => ({ ante: document.querySelector('#anteANTE2 > span').textContent, b: document.getElementById('buyBONUS').disabled, s: document.getElementById('buySUPER').disabled && document.getElementById('buyLANTERN').disabled && document.getElementById('buyFOLD').disabled, why: Array.from(document.querySelectorAll('#modeCards .why')).map(e => e.textContent) }));
+    if (lock.ante !== 'Deactivate' || !lock.b || !lock.s || lock.why.length !== 4 || lock.why[0] !== 'Bonus buys are unavailable while Ante is on. Deactivate Ante first.') bad('бонус-меню', 'при анте покупки должны быть закрыты: ' + JSON.stringify(lock));
     await page.click('#buyBONUS', { force: true }).catch(() => {}); if (await visible(page, '#bonusConfirm')) bad('бонус-меню', 'при анте открылось подтверждение покупки');
     await page.click('#anteANTE2'); await page.waitForTimeout(100);
     if (await page.isDisabled('#buyBONUS') || await page.evaluate(() => document.querySelectorAll('#modeCards .why').length)) bad('бонус-меню', 'после Deactivate покупки не открылись');
