@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Симулятор: RTP ± 95% ДИ, hit rate, частота бонуса, распределение выигрышей по режимам.
- *   node tools/math_sim.mjs [--rounds 3000000] [--modes BASE,ANTE,BONUS,SUPER] [--seed 2026] [--no-save]
+ *   node tools/math_sim.mjs [--rounds 3000000] [--modes BASE,ANTE2,ANTE4,BONUS,SUPER] [--seed 2026] [--no-save]
  * Сохраняет math/report.json и math/report.md; прошлый отчёт уходит в math/report_prev.json,
  * в конце печатается таблица «до / после».
  */
@@ -36,7 +36,7 @@ const eng = M.createEngine(M.TUNE);
 P(); P('## Разложение RTP (линии — точный перебор, бонус — из прогона BONUS)'); P();
 P('| Режим | Линии базового вращения | Вход в бонус | Вклад бонуса | Итого (оценка) |'); P('|---|---|---|---|---|');
 const bon = out.modes.BONUS;
-if (bon) for (const mode of ['BASE', 'ANTE']) {
+if (bon) for (const mode of Object.keys(CONFIG.modes).filter(m => !CONFIG.modes[m].force)) {
   const prof = eng.profiles[CONFIG.modes[mode].profile], L = exactLines(prof), d = scatterDist(prof.scatter), cost = CONFIG.modes[mode].cost;
   let f = 0; for (const k of [3, 4, 5]) f += d[k] * (bon.byK[k].n ? bon.byK[k].mean : bon.fsMean);
   const ptrig = d[3] + d[4] + d[5];

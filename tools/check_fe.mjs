@@ -286,7 +286,7 @@ const finish = (errs, tag) => { if (errs.length) problems.push(...errs.map(e => 
 async function playForced(page, tag, mode, seed, viaSpace = false) {
   const before = await state(page), b = book(mode, seed);
   await page.evaluate(s => window.__game.force(s), seed);
-  if (viaSpace) await page.keyboard.press('Space'); else await page.evaluate(m => { window.__game.spin(m === 'BASE' || m === 'ANTE' ? undefined : m); }, mode);
+  if (viaSpace) await page.keyboard.press('Space'); else await page.evaluate(m => { window.__game.spin(m === 'BASE' || m.startsWith('ANTE') ? undefined : m); }, mode);
   await started(page);
   return { before, b, async done() {
     await idle(page, 180000);
@@ -341,7 +341,7 @@ await run('sizes', async () => {
     checkGeom(tag + ' (режимы)', await page.evaluate(GEOM), w, h);
     await page.click('#buySUPER'); await page.waitForTimeout(200); await shot(page, `${tag}_9a_confirm`);
     checkGeom(tag + ' (подтверждение)', await page.evaluate(GEOM), w, h); await page.click('#buyCancel');
-    await page.click('#anteToggle'); await page.waitForTimeout(200); await shot(page, `${tag}_9b_modes_ante`);
+    await page.click('#anteANTE2'); await page.waitForTimeout(200); await shot(page, `${tag}_9b_modes_ante`);
     checkGeom(tag + ' (режимы, анте)', await page.evaluate(GEOM), w, h); await page.click('#bonusClose'); await page.waitForTimeout(150);
     await shot(page, `${tag}_9c_ante`); checkGeom(tag + ' (анте включён)', await page.evaluate(GEOM), w, h); await page.click('#btnBonus');
     await page.click('#btnBet'); await page.waitForTimeout(200); await shot(page, `${tag}_10_bet`);
@@ -464,7 +464,7 @@ await run('ui', async () => {
     if (JSON.stringify(order) !== JSON.stringify(want)) bad('правила', 'порядок разделов: ' + order.join(' / '));
     const last = await page.evaluate(() => document.querySelector('#infoSheet > :last-child').textContent);
     if (!last.startsWith('Malfunction voids all wins and plays.') || !/TM and © \d{4} Engine\.$/.test(last)) bad('правила', 'юридический текст не в самом низу: ' + last.slice(0, 60));
-    for (const need of ['Lands on reels 2, 3, 4', '×2, ×3, ×5', '×2, ×3, ×5, ×10', 'at most 40 free spins', 'once in 197 spins instead of once in 400', '15,000× the bet amount', 'one line can reach ×1,000'])
+    for (const need of ['Lands on reels 2, 3, 4', '×2, ×3, ×5', '×2, ×3, ×5, ×10', 'at most 40 free spins', 'once in 80 spins instead of once in 400', 'once in 32 spins instead of once in 400', '15,000× the bet amount', 'one line can reach ×1,000'])
       if (!info.includes(need)) bad('правила', 'нет «' + need + '»');
     const shots = await page.evaluate(() => [document.querySelectorAll('#infoSheet .ipay tr').length - 1, document.querySelectorAll('#infoSheet .ilines figure').length, document.querySelectorAll('#infoSheet .itbl').length]);
     if (shots[0] !== 8 || shots[1] !== 5 || shots[2] !== 2) bad('правила', 'таблица выплат / схема линий / таблицы фриспинов: ' + shots.join(' / '));
@@ -492,13 +492,13 @@ await run('ui', async () => {
     if (await text(page, '#multVal') !== '×' + mult.toLocaleString('en-US', { maximumFractionDigits: 2 })) bad('HUD', `множитель раунда «${await text(page, '#multVal')}», ожидался ×${mult}`);
     // анте: реальная цена в Bet, бейдж ×K, золотая кнопка Deactivate
     const gold = await page.evaluate(() => getComputedStyle(document.getElementById('app')).getPropertyValue('--gold').trim());
-    await page.click('#btnBonus'); await page.click('#anteToggle'); await page.click('#bonusClose'); await page.waitForTimeout(150);
+    await page.click('#btnBonus'); await page.click('#anteANTE2'); await page.click('#bonusClose'); await page.waitForTimeout(150);
     const a = await page.evaluate(() => { const b = document.getElementById('btnBonus'), cs = getComputedStyle(b), d = s => getComputedStyle(b.querySelector(s)).display !== 'none';
       return { bet: document.getElementById('betVal').textContent, badge: document.getElementById('anteBadge').hidden ? null : document.getElementById('anteBadge').textContent, cap: document.getElementById('bonusVal').textContent, tt: getComputedStyle(document.getElementById('bonusVal')).textTransform, c: cs.getPropertyValue('--c').trim(), on: b.classList.contains('on'), off: d('.ico-off'), star: d('.ico-bonus') }; });
-    if (a.bet !== '$1.25' || a.badge !== '×1.25' || a.cap !== 'Deactivate' || a.tt !== 'uppercase' || !a.on || a.c !== gold && a.c !== 'var(--gold)' || !a.off || a.star) bad('анте', 'панель при анте: ' + JSON.stringify(a) + ' gold=' + gold);
+    if (a.bet !== '$2.00' || a.badge !== '×2' || a.cap !== 'Deactivate' || a.tt !== 'uppercase' || !a.on || a.c !== gold && a.c !== 'var(--gold)' || !a.off || a.star) bad('анте', 'панель при анте: ' + JSON.stringify(a) + ' gold=' + gold);
     if (!(await visible(page, '#anteBadge'))) bad('анте', 'бейдж ×K не виден');
     await shot(page, 'ui_ante_on'); checkGeom('ui анте', await page.evaluate(GEOM), 1280, 720);
-    await page.click('#btnBetUp'); if (await text(page, '#betVal') !== '$2.50') bad('анте', 'цена после +: ' + await text(page, '#betVal')); await page.click('#btnBetDown');
+    await page.click('#btnBetUp'); if (await text(page, '#betVal') !== '$4.00') bad('анте', 'цена после +: ' + await text(page, '#betVal')); await page.click('#btnBetDown');
     await page.click('#btnBonus'); await page.waitForTimeout(100);
     const a2 = { ante: (await state(page)).ante, bet: await text(page, '#betVal'), badge: await visible(page, '#anteBadge'), cap: await text(page, '#bonusVal'), modal: await visible(page, '#bonusModal') };
     if (a2.ante || a2.bet !== '$1.00' || a2.badge || a2.cap !== 'Bonus' || a2.modal) bad('анте', 'Deactivate не выключил режим одним нажатием: ' + JSON.stringify(a2));
@@ -506,21 +506,21 @@ await run('ui', async () => {
     await page.click('#btnBonus'); await page.waitForTimeout(200);
     const cards = await page.evaluate(() => Array.from(document.querySelectorAll('#modeCards .modecard')).map(c => ({ mode: c.dataset.mode, plank: c.classList.contains('plank'), img: c.querySelector('img').naturalWidth > 0 && /mode_/.test(c.querySelector('img').src),
       name: c.querySelector('b').textContent, desc: c.querySelector('.desc').textContent.length > 10, vol: c.querySelector('.vol').textContent, bars: c.querySelectorAll('.bars i.f').length + '/' + c.querySelectorAll('.bars i').length,
-      price: c.querySelector('.price').childNodes[0].textContent, cur: c.querySelector('.price small').textContent, btn: c.querySelector('button').textContent, dis: c.querySelector('button').disabled, why: (c.querySelector('.why') || {}).textContent || '' })));
-    const wantCards = [['ANTE', 'Ante', '1.25×', '$1.25', 'Activate'], ['BONUS', 'Free spins', '100×', '$100.00', 'Buy'], ['SUPER', 'Super free spins', '300×', '$300.00', 'Buy']];
-    if (cards.length !== 3) bad('бонус-меню', 'досок не три: ' + cards.length);
+      price: c.querySelector('.price').childNodes[0].textContent, cur: c.querySelector('.price small').textContent, btn: (c.querySelector('button span') || c.querySelector('button')).textContent, dis: c.querySelector('button').disabled, why: (c.querySelector('.why') || {}).textContent || '' })));
+    const wantCards = [['ANTE', 'Ante', '2× / 4×', '$2.00 / $4.00', 'Activate'], ['BONUS', 'Free spins', '100×', '$100.00', 'Buy'], ['SUPER', 'Super free spins', '300×', '$300.00', 'Buy'], ['LANTERN', 'Lantern spins', '75×', '$75.00', 'Buy'], ['FOLD', 'Fold spins', '150×', '$150.00', 'Buy']];
+    if (cards.length !== wantCards.length) bad('бонус-меню', 'досок не ' + wantCards.length + ': ' + cards.length);
     cards.forEach((c, i) => { const w = wantCards[i]; if (!w || c.mode !== w[0] || c.name !== w[1] || c.price !== w[2] || c.cur !== w[3] || c.btn !== w[4] || !c.plank || !c.img || !c.desc || c.vol !== 'VolatilityHigh' || c.bars !== '4/5' || c.dis || c.why) bad('бонус-меню', 'доска ' + i + ': ' + JSON.stringify(c)); });
     if (await text(page, '#bmBetVal') !== '$1.00' || await text(page, '#bonusModal h2') !== 'Bonus modes') bad('бонус-меню', 'шапка: ' + await text(page, '#bonusModal h2') + ' / ' + await text(page, '#bmBetVal'));
     await page.click('#bmBetUp'); await page.waitForTimeout(100);
     const p2 = await page.evaluate(() => Array.from(document.querySelectorAll('#modeCards .price small')).map(e => e.textContent).join());
-    if (p2 !== '$2.50,$200.00,$600.00' || await text(page, '#bmBetVal') !== '$2.00' || (await state(page)).bet !== 2 * U) bad('бонус-меню', 'ставка + в меню: ' + p2);
+    if (p2 !== '$4.00 / $8.00,$200.00,$600.00,$150.00,$300.00' || await text(page, '#bmBetVal') !== '$2.00' || (await state(page)).bet !== 2 * U) bad('бонус-меню', 'ставка + в меню: ' + p2);
     await page.click('#bmBetDown');
     // анте включён — покупки недоступны, с подписью почему
-    await page.click('#anteToggle'); await page.waitForTimeout(150); await shot(page, 'ui_bonus_locked');
-    const lock = await page.evaluate(() => ({ ante: document.getElementById('anteToggle').textContent, b: document.getElementById('buyBONUS').disabled, s: document.getElementById('buySUPER').disabled, why: Array.from(document.querySelectorAll('#modeCards .why')).map(e => e.textContent) }));
-    if (lock.ante !== 'Deactivate' || !lock.b || !lock.s || lock.why.length !== 2 || lock.why[0] !== 'Bonus buys are unavailable while Ante is on. Deactivate Ante first.') bad('бонус-меню', 'при анте покупки должны быть закрыты: ' + JSON.stringify(lock));
+    await page.click('#anteANTE2'); await page.waitForTimeout(150); await shot(page, 'ui_bonus_locked');
+    const lock = await page.evaluate(() => ({ ante: document.querySelector('#anteANTE2 > span').textContent, b: document.getElementById('buyBONUS').disabled, s: document.getElementById('buySUPER').disabled && document.getElementById('buyLANTERN').disabled && document.getElementById('buyFOLD').disabled, why: Array.from(document.querySelectorAll('#modeCards .why')).map(e => e.textContent) }));
+    if (lock.ante !== 'Deactivate' || !lock.b || !lock.s || lock.why.length !== 4 || lock.why[0] !== 'Bonus buys are unavailable while Ante is on. Deactivate Ante first.') bad('бонус-меню', 'при анте покупки должны быть закрыты: ' + JSON.stringify(lock));
     await page.click('#buyBONUS', { force: true }).catch(() => {}); if (await visible(page, '#bonusConfirm')) bad('бонус-меню', 'при анте открылось подтверждение покупки');
-    await page.click('#anteToggle'); await page.waitForTimeout(100);
+    await page.click('#anteANTE2'); await page.waitForTimeout(100);
     if (await page.isDisabled('#buyBONUS') || await page.evaluate(() => document.querySelectorAll('#modeCards .why').length)) bad('бонус-меню', 'после Deactivate покупки не открылись');
     // подтверждение на такой же доске
     await page.click('#buyBONUS'); await page.waitForTimeout(150);
@@ -643,13 +643,13 @@ await run('demo', async () => {
 
   await page.click('#btnTurbo');
   // анте через меню режимов, ставка через меню ставок, автоигра 10 раундов
-  await page.click('#btnBonus'); await page.click('#anteToggle');
-  if (await text(page, '#anteToggle') !== 'Deactivate') bad('демо', 'после включения анте кнопка в меню не «Deactivate»');
+  await page.click('#btnBonus'); await page.click('#anteANTE2');
+  if (await text(page, '#anteANTE2 > span') !== 'Deactivate') bad('демо', 'после включения анте кнопка в меню не «Deactivate»');
   await page.click('#bonusClose');
   if (await text(page, '#bonusVal') !== 'Deactivate') bad('демо', 'главная кнопка при включённом анте не «Deactivate»: ' + await text(page, '#bonusVal'));
   await page.click('#btnBet'); await page.click('#betPills .pill:nth-child(7)');
   const s0 = await state(page);
-  if (s0.bet !== 2 * U || !s0.ante || await text(page, '#betVal') !== '$2.50') bad('демо', `анте и ставка из меню: bet ${s0.bet / U}, ante ${s0.ante}, поле ${await text(page, '#betVal')}`);
+  if (s0.bet !== 2 * U || !s0.ante || await text(page, '#betVal') !== '$4.00') bad('демо', `анте и ставка из меню: bet ${s0.bet / U}, ante ${s0.ante}, поле ${await text(page, '#betVal')}`);
   await page.click('#btnAuto'); await page.waitForTimeout(100);
   const opts = await page.evaluate(() => ['autoPills', 'autoLossPills', 'autoWinPills'].map(id => Array.from(document.querySelectorAll('#' + id + ' .pill')).map(p => p.textContent).join(' ')));
   if (opts[0] !== '10 25 50 100 500' || opts[1] !== 'No limit $20.00 $50.00 $100.00 $200.00' || opts[2] !== opts[1]) bad('демо', 'настройки автоигры: ' + JSON.stringify(opts));
@@ -661,7 +661,7 @@ await run('demo', async () => {
   if (await visible(page, '#autoLeft')) bad('демо', 'счётчик автоигры остался после её конца');
   const s1 = await state(page);
   const spent = s1.log.reduce((a, r) => a + r.cost, 0), won = s1.log.reduce((a, r) => a + r.win, 0);
-  if (s1.log.length !== 10 || s1.log.some(r => r.mode !== 'ANTE' || r.cost !== 2.5 * U)) bad('демо', 'автоигра с анте — не те раунды: ' + JSON.stringify(s1.log.map(r => [r.mode, r.cost / U])));
+  if (s1.log.length !== 10 || s1.log.some(r => r.mode !== 'ANTE2' || r.cost !== 4 * U)) bad('демо', 'автоигра с анте — не те раунды: ' + JSON.stringify(s1.log.map(r => [r.mode, r.cost / U])));
   if (s1.balance !== s0.balance - spent + won) bad('демо', `баланс не сходится с журналом (${s1.balance / U} против ${(s0.balance - spent + won) / U})`);
   console.log(`демо: анте, автоигра 10 раундов — потрачено ${spent / U}, выиграно ${won / U}, баланс ${s1.balance / U}`);
   await page.click('#btnBonus');   // при включённом анте кнопка сразу его выключает
@@ -864,7 +864,7 @@ await run('flags', async () => {
   { // disabledBuyFeature
     const { ctx, page, errs } = await live('disabledBuyFeature');
     await page.click('#btnBonus'); await page.waitForTimeout(150);
-    const v = { ante: await visible(page, '#anteToggle'), buy: await visible(page, '#buyBONUS') || await visible(page, '#buySUPER') };
+    const v = { ante: await visible(page, '#anteANTE2'), buy: await visible(page, '#buyBONUS') || await visible(page, '#buySUPER') };
     await shot(page, 'flag_disabledBuyFeature'); checkGeom('disabledBuyFeature', await page.evaluate(GEOM), 1280, 720);
     const one = await rect(page, '#modeCards .modecard'); if (Math.abs(one.cx - 640) > 1.5 || await page.evaluate(() => document.querySelectorAll('#modeCards .modecard').length) !== 1) bad('флаги', 'disabledBuyFeature: единственная доска не по центру (' + one.cx + ')');
     await page.keyboard.press('Escape');
@@ -939,16 +939,16 @@ await run('social', async () => {
   await page.keyboard.press('Escape');
   await page.click('#btnAuto'); await page.waitForTimeout(150); await scan(page, 'автоигра'); await page.keyboard.press('Escape');
   await page.click('#btnBonus'); await page.waitForTimeout(150); await scan(page, 'меню режимов'); await shot(page, 'social_3_modes');
-  const menu = { title: await text(page, '#bonusModal h2'), buy: await text(page, '#buyBONUS'), ante: await text(page, '#anteToggle') };
+  const menu = { title: await text(page, '#bonusModal h2'), buy: await text(page, '#buyBONUS'), ante: await text(page, '#anteANTE2 > span') };
   if (menu.title !== 'Feature modes' || menu.buy !== 'Purchase' || menu.ante !== 'Activate') bad('social', 'меню режимов: ' + JSON.stringify(menu));
-  await page.click('#anteToggle'); await scan(page, 'меню режимов, анте включён');
-  if (await text(page, '#anteToggle') !== 'Deactivate') bad('social', 'кнопка анте: ' + await text(page, '#anteToggle'));
+  await page.click('#anteANTE2'); await scan(page, 'меню режимов, анте включён');
+  if (await text(page, '#anteANTE2 > span') !== 'Deactivate') bad('social', 'кнопка анте: ' + await text(page, '#anteANTE2 > span'));
   if (await text(page, '#modeCards .why') !== 'Feature purchases are unavailable while Ante is on. Deactivate Ante first.') bad('social', 'подпись о закрытых покупках: ' + await text(page, '#modeCards .why'));
-  await page.click('#anteToggle');   // покупки доступны только при выключенном анте
+  await page.click('#anteANTE2');   // покупки доступны только при выключенном анте
   await page.click('#buySUPER'); await page.waitForTimeout(150); await scan(page, 'подтверждение покупки'); await shot(page, 'social_4_confirm');
   const conf = [await text(page, '#buyQ'), await text(page, '#buyConfirm')];
   if (conf[0] !== 'Purchase Super free spins?' || conf[1] !== 'Purchase for 300.00' + NB + 'GC') bad('social', 'подтверждение: ' + JSON.stringify(conf));
-  await page.click('#buyCancel'); await page.click('#anteToggle'); await page.click('#bonusClose'); await scan(page, 'главный экран, анте включён');
+  await page.click('#buyCancel'); await page.click('#anteANTE2'); await page.click('#bonusClose'); await scan(page, 'главный экран, анте включён');
   if (await text(page, '#bonusVal') !== 'Deactivate') bad('social', 'главная кнопка при анте: ' + await text(page, '#bonusVal'));
   await page.click('#btnBonus');
   // бонусный раунд: плашки и подписи фриспинов, выигрыш с 4 знаками
@@ -1093,16 +1093,16 @@ await run('i18n', async () => {
       checkGeom(tag + ' правила', await page.evaluate(GEOM), w, h); if (w === 375) await shot(page, `i18n_${l}_${w}x${h}_2_info`);
       await page.keyboard.press('Escape');
       await page.click('#btnBonus'); await page.waitForTimeout(150);
-      if (await text(page, '#bonusModal h2') !== D.modesTitle || await text(page, '#buyBONUS') !== D.buy || await text(page, '#anteToggle') !== D.activate) bad(tag, 'меню режимов не переведено');
+      if (await text(page, '#bonusModal h2') !== D.modesTitle || await text(page, '#buyBONUS') !== D.buy || await text(page, '#anteANTE2 > span') !== D.activate) bad(tag, 'меню режимов не переведено');
       checkGeom(tag + ' режимы', await page.evaluate(GEOM), w, h); await shot(page, `i18n_${l}_${w}x${h}_3_modes`);
-      await page.click('#anteToggle'); await page.waitForTimeout(80); checkGeom(tag + ' анте', await page.evaluate(GEOM), w, h);
-      if (await text(page, '#anteToggle') !== D.deactivate || await text(page, '#modeCards .why') !== D.buyLocked || !(await page.isDisabled('#buySUPER'))) bad(tag, 'при анте покупки не закрыты или подпись не переведена');
+      await page.click('#anteANTE2'); await page.waitForTimeout(80); checkGeom(tag + ' анте', await page.evaluate(GEOM), w, h);
+      if (await text(page, '#anteANTE2 > span') !== D.deactivate || await text(page, '#modeCards .why') !== D.buyLocked || !(await page.isDisabled('#buySUPER'))) bad(tag, 'при анте покупки не закрыты или подпись не переведена');
       if (w === 375) await shot(page, `i18n_${l}_${w}x${h}_3a_modes_ante`);
-      await page.click('#anteToggle');
+      await page.click('#anteANTE2');
       await page.click('#buySUPER'); await page.waitForTimeout(100);
       if (await text(page, '#buyQ') !== D.buyQuestion.replace('{name}', D.superName)) bad(tag, 'подтверждение покупки не переведено');
       checkGeom(tag + ' подтверждение', await page.evaluate(GEOM), w, h);
-      await page.click('#buyCancel'); await page.click('#anteToggle'); await page.click('#bonusClose');
+      await page.click('#buyCancel'); await page.click('#anteANTE2'); await page.click('#bonusClose');
       if (await text(page, '#bonusVal') !== D.deactivate) bad(tag, 'кнопка при анте: ' + await text(page, '#bonusVal'));
       await page.waitForTimeout(80); checkGeom(tag + ' анте включён', await page.evaluate(GEOM), w, h); await page.click('#btnBonus');
       await page.click('#btnBet'); await page.waitForTimeout(100); if (await text(page, '#betModal h2') !== D.betTitle) bad(tag, 'меню ставок не переведено');

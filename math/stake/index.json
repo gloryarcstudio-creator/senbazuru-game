@@ -7,10 +7,16 @@
             "weights": "lookUpTable_base_0.csv"
         },
         {
-            "name": "ante",
-            "cost": 1.25,
-            "events": "books_ante.jsonl.zst",
-            "weights": "lookUpTable_ante_0.csv"
+            "name": "ante2",
+            "cost": 2.0,
+            "events": "books_ante2.jsonl.zst",
+            "weights": "lookUpTable_ante2_0.csv"
+        },
+        {
+            "name": "ante4",
+            "cost": 4.0,
+            "events": "books_ante4.jsonl.zst",
+            "weights": "lookUpTable_ante4_0.csv"
         },
         {
             "name": "bonus",
@@ -23,6 +29,18 @@
             "cost": 300.0,
             "events": "books_super.jsonl.zst",
             "weights": "lookUpTable_super_0.csv"
+        },
+        {
+            "name": "lantern",
+            "cost": 75.0,
+            "events": "books_lantern.jsonl.zst",
+            "weights": "lookUpTable_lantern_0.csv"
+        },
+        {
+            "name": "fold",
+            "cost": 150.0,
+            "events": "books_fold.jsonl.zst",
+            "weights": "lookUpTable_fold_0.csv"
         }
     ]
 }

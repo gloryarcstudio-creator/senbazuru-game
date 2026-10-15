@@ -60,6 +60,16 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--indigo-deep);col
 /* ---------- поле ---------- */
 #board{transform:translate(-50%,-50%);background:var(--paper) url("assets/ui/paper.webp?v=15");background-size:256px}
 #board canvas{display:block;width:100%;height:100%}
+/* «Фонари линий»: фонарь-множитель у каждого ряда на левой планке рамки */
+#lanterns{position:absolute;inset:0;z-index:3;pointer-events:none}
+#lanterns .lan{position:absolute;left:calc(var(--bs)*-.035);top:calc(var(--pad) + var(--cell)*(var(--r) + .5));width:calc(var(--cell)*.5);height:calc(var(--cell)*.56);transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;border-radius:42% 42% 38% 38%/30% 30% 30% 30%;background:radial-gradient(circle at 50% 42%,#ffe9a8 0,#f3a64a 38%,#d8402f 72%,#9c2a22 100%);
+  box-shadow:0 0 calc(var(--cell)*.12) rgba(255,190,90,var(--glow,.35)),inset 0 calc(var(--cell)*-.04) 0 rgba(23,34,77,.25);border-top:calc(var(--cell)*.06) solid #17224d;border-bottom:calc(var(--cell)*.06) solid #17224d;
+  font:400 calc(var(--cell)*.16)/1 var(--font-display);color:#fff6e0;text-shadow:0 1px 2px rgba(23,34,77,.8)}
+#lanterns .lan.pop{animation:lanPop .45s ease-out}
+@keyframes lanPop{0%{transform:translate(-50%,-50%) scale(1)}40%{transform:translate(-50%,-50%) scale(1.35)}100%{transform:translate(-50%,-50%) scale(1)}}
+#lanterns .spark{position:absolute;width:calc(var(--cell)*.22);height:calc(var(--cell)*.22);margin:calc(var(--cell)*-.11) 0 0 calc(var(--cell)*-.11);border-radius:50%;
+  background:radial-gradient(circle,#fff6e0 0,#ffd36b 40%,rgba(233,182,60,0) 70%);transition:transform .45s cubic-bezier(.5,0,.7,1),opacity .45s;font:400 calc(var(--cell)*.15)/calc(var(--cell)*.22) var(--font-display);color:#17224d;text-align:center}
 /* рамка 2048×2048 с окном (184,184)–(1864,1864): окно совпадает с полем (--bs — сторона поля) */
 #board .frame{position:absolute;z-index:1;inset:calc(var(--bs)*-.10952);pointer-events:none;background:url("assets/ui/frame_base.webp?v=15") 0 0/100% 100% no-repeat}
 [data-fs="1"] #board .frame{background-image:url("assets/ui/frame_fs.webp?v=15")}
@@ -440,6 +450,9 @@ button.sk:active:not(:disabled) .sk-dim{opacity:.2}
 .price{font:400 1.5em/1 var(--font-display);color:var(--hanko)}
 .price small{display:block;margin-top:.25em;font:800 .52em/1 var(--font-ui);color:var(--ink)}
 .modecard .pill{margin-top:auto;min-width:8em}
+.ante-pick{display:flex;flex-wrap:wrap;justify-content:center;gap:.4em;width:100%}
+.ante-pick .pill{min-width:0;flex:1 1 6.5em;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.ante-pick .pill small{font-size:.72em;font-weight:700;opacity:.85}
 .why{font-size:.74em;line-height:1.25;color:var(--hanko)}
 [data-mode="portrait"] .bm-head{flex-direction:column;padding-inline:0;padding-top:.2em}
 [data-mode="portrait"] .bm-title{margin-inline:3.2em}
@@ -565,6 +578,7 @@ button.sk:active:not(:disabled) .sk-dim{opacity:.2}
     <canvas id="reels"></canvas>
     <i class="frame"></i>
     <canvas class="frameFx" aria-hidden="true"></canvas>
+    <div id="lanterns" hidden></div>
   </div>
 
   <div id="fsBox" class="abs" hidden><div class="tag"><span class="lbl" id="fsLbl" data-fit>Free spins</span><span class="val" id="fsVal" data-fit>0 / 0</span></div></div>
@@ -743,10 +757,12 @@ const CONFIG = {
   fsAward: { 3: 8, 4: 10, 5: 12 }, retrigger: { scatters: 3, add: 5 }, maxFs: 40,
   wildReels: [1, 2, 3],                                                   // барабаны 2, 3, 4 (индексы с нуля)
   wildMult: { base: [2, 3, 5], fs: [2, 3, 5, 10], superStart: [2, 3, 5, 10] },
-  superStartWilds: 3, superMoreWilds: true,                               // в суперфриспинах вайлды выпадают чаще, чем в обычных
-  fsOdds: { BASE: 400, ANTE: 197 },                                       // вход во фриспины: в среднем 1 раз за N вращений
+  superStartWilds: 3, superMoreWilds: true,
+  lanternAdds: [2, 3, 5, 10], foldMult: [2, 3],                           // «Фонари линий»: прибавки вайлдов к фонарю ряда; «Сгиб»: множители вайлдов                               // в суперфриспинах вайлды выпадают чаще, чем в обычных
+  fsOdds: { BASE: 400, ANTE2: 80, ANTE4: 32 },                                       // вход во фриспины: в среднем 1 раз за N вращений
   // режимы RGS: цена в ставках и заявленный RTP (считает математика, здесь только для экрана правил)
-  modes: { BASE: { cost: 1, rtp: 96.00, vol: 4 }, ANTE: { cost: 1.25, rtp: 96.00, vol: 4 }, BONUS: { cost: 100, rtp: 96.00, vol: 4 }, SUPER: { cost: 300, rtp: 96.00, vol: 4 } },   // vol — волатильность по шкале 1–5
+  modes: { BASE: { cost: 1, rtp: 96.00, vol: 4 }, ANTE2: { cost: 2, rtp: 96.00, vol: 4 }, ANTE4: { cost: 4, rtp: 96.00, vol: 4 }, BONUS: { cost: 100, rtp: 96.00, vol: 4 }, SUPER: { cost: 300, rtp: 96.00, vol: 4 },
+    LANTERN: { cost: 75, rtp: 96.00, vol: 4 }, FOLD: { cost: 150, rtp: 96.00, vol: 4 } },   // vol — волатильность по шкале 1–5
   bookUnit: 100,        // суммы в событиях раунда: 100 = 1× ставки
   apiUnit: 1000000,     // деньги в API RGS: 1 000 000 = 1.00
   winTiers: [15, 50, 250, 500] // пороги (× ставки) для табличек NICE / BIG / MEGA / EPIC; MAX — потолок maxWin
@@ -771,7 +787,7 @@ const ASSETS = {
     W:  { src: 'assets/anim/W_win.webp?v=15',  fw: 256, fh: 256, frames: 20, cols: 20, fps: 24 },
     S:  { src: 'assets/anim/S_win.webp?v=15',  fw: 256, fh: 256, frames: 20, cols: 20, fps: 24 }
   },
-  preload: ['assets/ui/paper.webp?v=15', 'assets/ui/mode_ante.webp?v=15', 'assets/ui/mode_bonus.webp?v=15', 'assets/ui/mode_super.webp?v=15',
+  preload: ['assets/ui/paper.webp?v=15', 'assets/ui/mode_ante.webp?v=15', 'assets/ui/mode_bonus.webp?v=15', 'assets/ui/mode_super.webp?v=15', 'assets/ui/mode_lantern.webp?v=15', 'assets/ui/mode_fold.webp?v=15',
     'assets/ui/frame_base.webp?v=15', 'assets/ui/logo.webp?v=15', 'assets/ui/icons.webp?v=15', 'assets/ui/tag_value.webp?v=15', 'assets/ui/tag_win.webp?v=15', 'assets/ui/tag_fs.webp?v=15',
     'assets/ui/hud_mult.webp?v=15', 'assets/ui/plank_body.webp?v=15', 'assets/ui/toggle_on.webp?v=15', 'assets/ui/toggle_off.webp?v=15'],
   // после старта, в фоне: рамки и фоны фриспинов (нужны только при входе в бонус)
@@ -906,7 +922,7 @@ const G = {
   live: false, replay: null, social: false, currency: 'USD', balance: 0,
   betLevels: [], betIdx: 0, bet: 0,
   busy: false, auto: 0, turbo: false, sound: true, music: true, sfx: true, space: true, ready: false, canSlam: false, slam: false,
-  board: null, lastWin: 0, modal: null, ante: false, fs: null, log: [],
+  board: null, lastWin: 0, modal: null, ante: null, fs: null, log: [],
   // флаги юрисдикции из config.jurisdiction ответа authenticate
   jur: { disabledTurbo: false, disabledAutoplay: false, disabledBuyFeature: false, disabledSpacebar: false, disabledSlamstop: false, displayRTP: false, minimumRoundDuration: 0 }
 };
@@ -1374,7 +1390,7 @@ function drawSymbol(name, cx, cy, size, alpha, frame, stretch, ph, amp) {
   ctx.restore();
 }
 function drawBadge(c, r, mult, scale) {
-  const { cell } = R, fs = cell * 0.19 * (scale || 1), text = '×' + mult;
+  const { cell } = R, fs = cell * 0.19 * (scale || 1), text = (G.fs && G.fs.feature === 'lantern' ? '+' : '×') + mult;   // в «Фонарях линий» вайлд прибавляет к фонарю
   const cx = (c + 1) * cell - cell * 0.25, cy = r * cell + cell * 0.19;   // правый верхний угол ячейки, чтобы не закрывать надпись WILD
   ctx.font = fs + 'px "Dela Gothic One","Arial Black",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const w = Math.max(ctx.measureText(text).width + fs * 0.7, fs * 2), h = fs * 1.45, k = h * 0.32;
@@ -1462,6 +1478,7 @@ function drawBoard(t) {
     else Show.wins.forEach(w => drawCord(w, 1, glow, pulse, t));
   }
   if (hl) badges.filter(b => hl.has(b[0])).forEach(badge);
+  drawFold(t);
   if (lined && Show.phase === 'one' && !Show.wins[Show.idx].noLabel) {
     const w = Show.wins[Show.idx], cols = w.positions.map(p => p.reel), row = w.positions[0].row;
     const cx = (Math.min(...cols) + Math.max(...cols) + 1) / 2 * cell, cy = (row + 1) * cell - cell * 0.13;
@@ -1474,6 +1491,31 @@ function drawBoard(t) {
     ctx.lineTo(cx - tw / 2 + k, cy + th / 2); ctx.lineTo(cx - tw / 2, cy); ctx.closePath(); ctx.fill(); ctx.restore();
     ctx.fillStyle = '#f7e7b4'; ctx.fillText(text, cx, cy + fs * 0.04);
   }
+}
+/* «Сгиб»: снимок поля, лист складывается по среднему барабану (scaleX 1 → −1 вокруг его центра), затем поле заменяется отпечатком */
+function foldBoard(ev) {
+  const b = readBoard(ev), left = ev.side !== 'right', dur = G.slam ? 0.12 : G.turbo ? 0.45 : 0.85;
+  const snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height; snap.getContext('2d').drawImage(cv, 0, 0);
+  R.fold = { t0: now(), dur, left, snap }; R.dirty = true; Snd.sfx('ui_toggle_on');
+  return new Promise(res => setTimeout(() => {
+    const t = now();
+    for (let k = 0; k < 2; k++) { const to = left ? CONFIG.reels - 1 - k : k; R.reels[to] = makeReel(to, b.names[to]); R.reels[to].idleAt = t; }
+    R.fold = null; R.mults = b.mults; G.board = b.names; R.dirty = true;
+    if (ev.prints && ev.prints.length) Snd.wild(Math.max(...ev.prints.map(p => p.multiplier)), true);
+    res();
+  }, dur * 1000));
+}
+function drawFold(t) {
+  const F = R.fold, { cell, inner, dpr } = R; if (!F) return;
+  const k = clamp((t - F.t0) / F.dur, 0, 1), s = Math.cos(Math.PI * ease(k)), x0 = F.left ? 0 : 3 * cell, mid = 2.5 * cell;
+  ctx.save(); ctx.translate(mid, 0); ctx.scale(s, 1); ctx.translate(-mid, 0);
+  ctx.fillStyle = '#f1ead8'; ctx.fillRect(x0, 0, 2 * cell, inner);
+  ctx.drawImage(F.snap, x0 * dpr, 0, 2 * cell * dpr, inner * dpr, x0, 0, 2 * cell, inner);
+  ctx.fillStyle = 'rgba(23,34,77,' + (0.28 * (1 - Math.abs(s))).toFixed(3) + ')'; ctx.fillRect(x0, 0, 2 * cell, inner);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(233,182,60,' + (0.5 + 0.5 * Math.sin(Math.PI * k)).toFixed(3) + ')'; ctx.lineWidth = cell * 0.04; ctx.setLineDash([cell * 0.09, cell * 0.06]);
+  ctx.beginPath(); ctx.moveTo(mid, 0); ctx.lineTo(mid, inner); ctx.stroke(); ctx.setLineDash([]);
+  R.dirty = true;
 }
 const hexA = (hex, a) => 'rgba(' + [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(',') + ',' + a + ')';
 /* Шнур линии: от узла на первой клетке комбинации через центры её клеток до узла на последней — дальше не идёт.
@@ -1701,6 +1743,7 @@ function layout() {
   boardEl.style.left = (bx + side / 2) + 'px'; boardEl.style.top = (by + side / 2) + 'px';
   boardEl.style.width = bs + 'px'; boardEl.style.height = bs + 'px'; boardEl.style.padding = padIn + 'px';
   const inner = bs - 2 * padIn; R.inner = inner; R.cell = inner / CONFIG.reels; R.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  boardEl.style.setProperty('--cell', R.cell + 'px'); boardEl.style.setProperty('--pad', padIn + 'px');
   cv.width = Math.round(inner * R.dpr); cv.height = Math.round(inner * R.dpr); R.dirty = true;
   FX.w = W; FX.h = H; FX.dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1 : 1.5); fxCv.width = Math.round(W * FX.dpr); fxCv.height = Math.round(H * FX.dpr); FX.dirty = true;
   // табличка фриспинов — по центру на верхней планке рамки
@@ -1715,11 +1758,12 @@ function place(el, x, y, w, h) { el.style.left = x + 'px'; el.style.top = y + 'p
 /* ================= интерфейс ================= */
 function setBalance(v) { G.balance = v; $('balanceVal').textContent = money(v); queueFit(); }
 const modeCost = mode => Math.round(G.bet * CONFIG.modes[mode].cost);
-const spinMode = () => (G.ante ? 'ANTE' : 'BASE');
+const ANTES = ['ANTE2', 'ANTE4'];                 // уровни анте: G.ante — null или один из них
+const spinMode = () => (G.ante || 'BASE');
 /* В поле ставки — реальная цена вращения; при анте рядом бейдж ×K. */
 function showBet() {
   $('betVal').textContent = money(modeCost(spinMode())); $('bmBetVal').textContent = money(G.bet);
-  $('anteBadge').hidden = !G.ante; $('anteBadge').textContent = '×' + CONFIG.modes.ANTE.cost;
+  $('anteBadge').hidden = !G.ante; $('anteBadge').textContent = G.ante ? '×' + CONFIG.modes[G.ante].cost : '';
   queueFit();
 }
 function setBet(idx) {
@@ -1747,13 +1791,32 @@ function setupBets(cfg, resumeAmount) {
 }
 function setFs(i, total) { $('fsVal').textContent = i + ' / ' + total; queueFit(); }
 function popFs() { const b = $('fsBox'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
-function enterFs(total, isSuper) {
-  G.fs = { total, isSuper }; app.dataset.fs = isSuper ? '2' : '1'; Snd.setMode(isSuper ? 'super' : 'fs'); setBackground();
-  $('fsLbl').textContent = t(isSuper ? 'superSpins' : 'freeSpins'); $('fsBox').hidden = false; setFs(0, total);
+const fsLabel = () => t(G.fs.feature ? G.fs.feature + 'Spins' : G.fs.isSuper ? 'superSpins' : 'freeSpins');
+function enterFs(total, isSuper, feature, lanterns) {
+  G.fs = { total, isSuper, feature: feature || null }; app.dataset.fs = isSuper ? '2' : '1'; Snd.setMode(isSuper ? 'super' : 'fs'); setBackground();
+  $('fsLbl').textContent = fsLabel(); $('fsBox').hidden = false; setFs(0, total);
+  const box = $('lanterns'); box.hidden = !lanterns; box.textContent = '';
+  if (lanterns) lanterns.forEach((v, r) => { const e = document.createElement('b'); e.className = 'lan'; e.style.setProperty('--r', r); e.textContent = '×' + v; box.appendChild(e); });
+}
+/* «Фонари линий»: значения фонарей; pop — какие ряды вспыхивают */
+function setLanterns(vals, pop) {
+  const els = $('lanterns').children;
+  vals.forEach((v, r) => { const e = els[r]; if (!e) return; e.textContent = '×' + v; e.style.setProperty('--glow', Math.min(1, 0.3 + v / 40).toFixed(2)); if (pop && pop.has(r)) restartCls(e, 'pop'); });
+}
+/* искра от вайлда к фонарю его ряда */
+function lanternSparks(adds, padded) {
+  const box = $('lanterns'), cell = R.cell, pad = parseFloat(boardEl.style.getPropertyValue('--pad')) || 0, bs = parseFloat(boardEl.style.getPropertyValue('--bs')) || 0;
+  for (const a of adds) {
+    const row = a.row - (padded ? 1 : 0), e = document.createElement('i'); e.className = 'spark'; e.textContent = '+' + a.add;
+    const x = pad + (a.reel + 0.5) * cell, y = pad + (row + 0.5) * cell, tx = -bs * 0.035;
+    e.style.left = x + 'px'; e.style.top = y + 'px'; box.appendChild(e);
+    requestAnimationFrame(() => requestAnimationFrame(() => { e.style.transform = 'translate(' + (tx - x) + 'px,0) scale(.6)'; e.style.opacity = '.4'; }));
+    setTimeout(() => e.remove(), 520);
+  }
 }
 function leaveFs() {
   clearWins(); G.fs = null; Snd.setMode('base'); delete app.dataset.fs; setBackground(); R.sticky = new Map(); R.pop = new Map(); R.dirty = true;
-  $('fsBox').hidden = true;
+  $('fsBox').hidden = true; $('lanterns').hidden = true; $('lanterns').textContent = ''; R.fold = null;
 }
 function setWin(v) { G.lastWin = v; $('winVal').textContent = money(v, 'win'); $('winVal').classList.toggle('zero', !(v > 0)); queueFit(); }
 /* HUD множителя: выигрыш текущего раунда в ставках — число из событий раунда и ответа RGS. */
@@ -1772,7 +1835,7 @@ function updateButtons() {
   $('btnTurbo').hidden = J.disabledTurbo; $('btnTurbo').classList.toggle('on', G.turbo); $('btnTurbo').setAttribute('aria-pressed', String(G.turbo));
   // Bonus: при включённом анте — золотая кнопка Deactivate, по нажатию выключает режим
   const bb = $('btnBonus'), bLabel = G.ante ? t('deactivate') + ': ' + t('anteName') : t('aBonus');
-  bb.disabled = lock; bb.classList.toggle('on', G.ante); $('bonusVal').textContent = t(G.ante ? 'deactivate' : 'bonus');
+  bb.disabled = lock; bb.classList.toggle('on', !!G.ante); $('bonusVal').textContent = t(G.ante ? 'deactivate' : 'bonus');
   bb.setAttribute('aria-label', bLabel); bb.title = bLabel;
   const sp = $('btnSpin'), spLabel = t(G.auto > 0 ? 'aStopAuto' : G.busy ? 'aStop' : 'aSpin');
   sp.classList.toggle('auto', G.auto > 0); sp.classList.toggle('busy', G.busy);
@@ -1790,7 +1853,7 @@ function applyTexts() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { const s = t(el.dataset.i18nAria); el.setAttribute('aria-label', s); el.title = s; });
   $('btnMenu').setAttribute('aria-label', t('menu'));
-  if (G.fs) $('fsLbl').textContent = t(G.fs.isSuper ? 'superSpins' : 'freeSpins');
+  if (G.fs) $('fsLbl').textContent = fsLabel();
 }
 function openModal(id) { toggleMenu(false); Snd.sfx('ui_open'); G.modal = id; $(id).hidden = false; fitModal(); const f = $(id).querySelector('button'); if (f) f.focus(); }
 /* Короткие окна (автоигра, настройки) должны помещаться без прокрутки: на низких экранах шрифт окна ужимается. */
@@ -1802,7 +1865,7 @@ function fitModal() {
 }
 function closeModal() { if (G.modal) { Snd.sfx('ui_close'); $(G.modal).hidden = true; G.modal = null; } }
 const errorText = e => t({ ERR_IPB: 'errIPB', ERR_IS: 'errIS', ERR_ATE: 'errATE', ERR_GLE: 'errGLE', ERR_LOC: 'errLOC', ERR_MAINTENANCE: 'errMAINT', ERR_VAL: 'errVAL' }[e && e.code] || 'errGEN');
-const modeName = m => (I18N.en['mode' + m] ? t('mode' + m) : (G.social ? socialize(m) : m));
+const modeName = m => (ANTES.includes(m) ? t('modeANTE') + ' ×' + CONFIG.modes[m].cost : I18N.en['mode' + m] ? t('mode' + m) : (G.social ? socialize(m) : m));
 
 /* Меню раскрывается вверх над кнопкой Menu: Info, Settings, Sound. Если сверху мало места (маленький попап) — в строку. */
 function placeMenu() {
@@ -1838,7 +1901,9 @@ function buildInfo() {
     a: '×' + WM.base[0], b: '×' + WM.base[1], ab: '×' + WM.base[0] * WM.base[1],
     min: fsKeys[0], maxFs: CONFIG.maxFs, add: CONFIG.retrigger.add, n: CONFIG.superStartWilds,
     lo: '×' + Math.min(...WM.superStart), hi: '×' + Math.max(...WM.superStart),
-    oddsBase: num(CONFIG.fsOdds.BASE), oddsAnte: num(CONFIG.fsOdds.ANTE), mult: CONFIG.modes.ANTE.cost
+    lv: CONFIG.lanternAdds.map(v => '+' + v).join(', '), fm: xs(CONFIG.foldMult), one: '×1', sc: CONFIG.retrigger.scatters,
+    awards: Object.values(CONFIG.fsAward).join(' / '),
+    oddsBase: num(CONFIG.fsOdds.BASE), oddsAnte: num(CONFIG.fsOdds.ANTE2), mult: CONFIG.modes.ANTE2.cost
   };
   if (lang === 'ar') for (const k of Object.keys(vars)) if (/[×\d]/.test(String(vars[k]))) vars[k] = '\u2066' + vars[k] + '\u2069';   // LTR-изоляция чисел внутри арабского текста
   const T = (k, v) => esc(t(k, Object.assign({}, vars, v || {})));
@@ -1897,17 +1962,19 @@ function buildInfo() {
 
   // 7) бонус-режимы и цены
   const price = (m, key) => '<span class="price">' + esc(money(modeCost(m))) + '</span><small class="pricex">' + T(key, { x: CONFIG.modes[m].cost }) + '</small>';
-  let modes = card(img(MODE_UI.ANTE.img, ''), esc(modeName('ANTE')), T('anteInfo'), price('ANTE', 'perSpin'));
+  let modes = ANTES.map(m => card(img(MODE_UI.ANTE.img, ''), esc(modeName(m)), T('anteInfo', { oddsAnte: num(CONFIG.fsOdds[m]) }), price(m, 'perSpin'))).join('');
   if (buys) {
     modes += card(img(MODE_UI.BONUS.img, ''), esc(modeName('BONUS')), T('bonusInfo'), price('BONUS', 'xBet'));
     modes += card(img(MODE_UI.SUPER.img, ''), esc(modeName('SUPER')), T('superInfo'), price('SUPER', 'xBet'));
+    modes += card(img(MODE_UI.LANTERN.img, ''), esc(modeName('LANTERN')), T('lanternInfo'), price('LANTERN', 'xBet'));
+    modes += card(img(MODE_UI.FOLD.img, ''), esc(modeName('FOLD')), T('foldInfo'), price('FOLD', 'xBet'));
   }
   h += sec(T('modesTitle'), '<div class="icards">' + modes + '</div>' + (buys ? P('buyLocked') + P('buyNote') : ''));
 
   // 8) максимальный выигрыш
   let mt = '<table class="imodes"><tr><th>' + T('colMode') + '</th><th>' + T('colPrice') + '</th><th>RTP</th><th>' + T('factMax') + '</th></tr>';
   for (const m of Object.keys(CONFIG.modes)) {
-    if (!buys && (m === 'BONUS' || m === 'SUPER')) continue;
+    if (!buys && BUYS.includes(m)) continue;
     const md = CONFIG.modes[m], cell = v => '<td>' + (lang === 'ar' ? '\u2066' + v + '\u2069' : v) + '</td>';
     mt += '<tr><td>' + esc(modeName(m)) + '</td>' + cell('×' + md.cost) + cell(md.rtp.toFixed(2) + '%') + cell(vars.max.replace(/[\u2066\u2069]/g, '') + '×') + '</tr>';
   }
@@ -1967,31 +2034,45 @@ function buildAutoMenu() {
 const MODE_UI = {
   ANTE: { img: 'assets/ui/mode_ante.webp?v=15', name: 'anteName', text: 'anteText' },
   BONUS: { img: 'assets/ui/mode_bonus.webp?v=15', name: 'fsName', text: 'fsText' },
-  SUPER: { img: 'assets/ui/mode_super.webp?v=15', name: 'superName', text: 'superText' }
+  SUPER: { img: 'assets/ui/mode_super.webp?v=15', name: 'superName', text: 'superText' },
+  LANTERN: { img: 'assets/ui/mode_lantern.webp?v=15', name: 'lanternName', text: 'lanternText' },
+  FOLD: { img: 'assets/ui/mode_fold.webp?v=15', name: 'foldName', text: 'foldText' }
 };
+const BUYS = ['BONUS', 'SUPER', 'LANTERN', 'FOLD'];   // покупки бонуса
 let buySel = 'BONUS';
 const priceX = m => CONFIG.modes[m].cost + '×';
 function buildBonusMenu() {
   $('modeCards').hidden = false; $('bonusConfirm').hidden = true;
   const box = $('modeCards'); box.textContent = '';
-  box.style.setProperty('--n', G.jur.disabledBuyFeature ? 1 : 3);   // без покупок остаётся одна доска — она встаёт по центру
+  box.style.setProperty('--n', G.jur.disabledBuyFeature ? 1 : 1 + BUYS.length);   // без покупок остаётся одна доска — она встаёт по центру
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-  for (const m of ['ANTE', 'BONUS', 'SUPER']) {
+  for (const m of ['ANTE'].concat(BUYS)) {
     if (m !== 'ANTE' && G.jur.disabledBuyFeature) continue;
-    const ui = MODE_UI[m], isAnte = m === 'ANTE', locked = !isAnte && G.ante;
+    const ui = MODE_UI[m], isAnte = m === 'ANTE', locked = !isAnte && !!G.ante;
     const c = el('div', 'plank modecard' + (isAnte && G.ante ? ' on' : '')); c.dataset.mode = m;
     const img = el('img'); img.src = ui.img; img.alt = ''; c.appendChild(img);
     c.appendChild(el('b', '', t(ui.name)));
-    c.appendChild(el('span', 'desc', t(ui.text, { mult: CONFIG.modes.ANTE.cost })));
+    c.appendChild(el('span', 'desc', t(ui.text, { mult: isAnte ? ANTES.map(a => CONFIG.modes[a].cost).join(' / ') : '' })));
     const vol = el('span', 'vol'); vol.appendChild(el('span', '', t('volatility')));
-    const bars = el('span', 'bars'); for (let i = 0; i < 5; i++) bars.appendChild(el('i', i < CONFIG.modes[m].vol ? 'f' : '')); vol.appendChild(bars);
+    const bars = el('span', 'bars'); for (let i = 0; i < 5; i++) bars.appendChild(el('i', i < CONFIG.modes[isAnte ? 'ANTE2' : m].vol ? 'f' : '')); vol.appendChild(bars);
     vol.appendChild(el('em', '', t('volHigh'))); c.appendChild(vol);
     const foot = el('div', 'foot');
+    if (isAnte) {   // анте: два уровня, у каждого своя кнопка; нажатие на включённый уровень выключает анте
+      const pick = el('div', 'ante-pick');
+      for (const a of ANTES) {
+        const on = G.ante === a, b = el('button', 'pill' + (on ? '' : ' go')); b.type = 'button'; b.id = 'ante' + a; b.dataset.ante = a;
+        b.appendChild(el('span', '', t(on ? 'deactivate' : 'activate'))); b.appendChild(el('small', '', priceX(a) + ' · ' + money(modeCost(a))));
+        b.setAttribute('aria-pressed', String(on));
+        b.onclick = () => { G.ante = on ? null : a; Snd.ui(G.ante ? 'ante_on' : 'ante_off'); showBet(); updateButtons(); buildBonusMenu(); };
+        pick.appendChild(b);
+      }
+      const price = el('span', 'price', ANTES.map(priceX).join(' / ')); price.appendChild(el('small', '', ANTES.map(a => money(modeCost(a))).join(' / ')));
+      foot.appendChild(price); foot.appendChild(pick); c.appendChild(foot); box.appendChild(c); continue;
+    }
     const price = el('span', 'price', priceX(m)); price.appendChild(el('small', '', money(modeCost(m)))); foot.appendChild(price);
-    const b = el('button', 'pill' + (isAnte && G.ante ? '' : ' go'), t(isAnte ? (G.ante ? 'deactivate' : 'activate') : 'buy')); b.type = 'button'; b.id = isAnte ? 'anteToggle' : 'buy' + m;
-    b.disabled = locked || (!isAnte && G.balance < modeCost(m));
-    b.onclick = isAnte ? () => { G.ante = !G.ante; Snd.ui(G.ante ? 'ante_on' : 'ante_off'); showBet(); updateButtons(); buildBonusMenu(); }
-      : () => { Snd.click(); buySel = m; $('modeCards').hidden = true; $('bonusConfirm').hidden = false;
+    const b = el('button', 'pill go', t('buy')); b.type = 'button'; b.id = 'buy' + m;
+    b.disabled = locked || G.balance < modeCost(m);
+    b.onclick = () => { Snd.click(); buySel = m; $('modeCards').hidden = true; $('bonusConfirm').hidden = false;
         $('buyImg').src = ui.img; $('buyQ').textContent = t('buyQuestion', { name: t(ui.name) });
         $('buyPrice').textContent = priceX(m) + ' · ' + money(modeCost(m));
         const ok = $('buyConfirm'); ok.textContent = t('buyConfirm', { price: money(modeCost(m)) }); ok.disabled = G.balance < modeCost(m); fitBonusMenu(); ok.focus(); };
@@ -2209,14 +2290,21 @@ async function presentRound(round) {
       P.bonus = true; showCells(readPositions(ev.positions, P.padded)); Snd.event('bonus_trigger'); Hero.react('bonus'); await hold(1000);
       Snd.event(ev.super ? 'super_intro' : 'fs_intro');
       await transition(ev.super ? 'super' : 'fs', () => {
-        clearWins(); enterFs(ev.totalFs, !!ev.super); popFs(); confetti(1.2); if (ev.startWilds) Snd.sfx('super_wilds', { when: 0.3 });
+        clearWins(); enterFs(ev.totalFs, !!ev.super, ev.feature, ev.lanterns); popFs(); confetti(1.2); if (ev.startWilds) Snd.sfx('super_wilds', { when: 0.3 });
         if (ev.startWilds) { const tt = now(); readPositions(ev.startWilds, P.padded).forEach((p, i) => { const key = p.reel + ',' + p.row; R.sticky.set(key, ev.startWilds[i].multiplier); R.pop.set(key, tt); }); }
-      }, { n: ev.totalFs });
+      }, { n: ev.totalFs, feature: ev.feature });
       await hold(500);
+    } else if (ev.type === 'lanternUpdate') {   // «Фонари линий»: вайлды прибавляют к фонарям своих рядов
+      lanternSparks(ev.adds, P.padded); Snd.wild(Math.max(...ev.adds.map(a => a.add)), true); await hold(460);
+      setLanterns(ev.lanterns, new Set(ev.adds.map(a => a.row - (P.padded ? 1 : 0)))); await hold(350);
+    } else if (ev.type === 'fold') {   // «Сгиб»: половина поля зеркально отпечатывается на другую
+      await foldBoard(ev); await hold(300);
     } else if (ev.type === 'updateFreeSpin') {
       P.fsI = ev.amount; setFs(ev.amount, ev.total);
     } else if (ev.type === 'retrigger') {
-      showCells(readPositions(ev.positions, P.padded)); Snd.event('retrigger'); await hold(700); setFs(P.fsI, ev.total); popFs(); await hold(500);
+      showCells(readPositions(ev.positions, P.padded)); Snd.event('retrigger'); await hold(700); setFs(P.fsI, ev.total); popFs();
+      if (ev.lanterns) setLanterns(ev.lanterns, new Set([0, 1, 2, 3, 4]));
+      await hold(500);
     } else if (ev.type === 'wincap') {
       P.capped = true;
     } else if (ev.type === 'bonusEnd') {
@@ -2622,7 +2710,7 @@ const eob = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * 
 const lcg = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 const LOGO_SRC = 'assets/ui/logo.webp?v=15';
 function tfxImg(src) { let im = TFX.img[src]; if (!im) { im = TFX.img[src] = new Image(); im.src = src; } return im.complete && im.naturalWidth ? im : null; }
-function tfxPrep() { craneSprites(); [MODE_UI.BONUS.img, MODE_UI.SUPER.img, LOGO_SRC].forEach(tfxImg); }
+function tfxPrep() { craneSprites(); [MODE_UI.BONUS.img, MODE_UI.SUPER.img, MODE_UI.LANTERN.img, MODE_UI.FOLD.img, LOGO_SRC].forEach(tfxImg); }
 function tfxSize(z) {
   if (!TFX.cv) { const cv = TFX.cv = document.createElement('canvas'); cv.id = 'tfx'; cv.setAttribute('aria-hidden', 'true'); app.appendChild(cv); TFX.c = cv.getContext('2d'); }
   const rc = app.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2), W = Math.round(rc.width), H = Math.round(rc.height);
@@ -2886,13 +2974,14 @@ function byobuPaint(c, W, H) {
 }
 const TRANS = {
   fs(mid, o) {
-    const txt = t('fsIntro', { n: o.n || '' }); let birds = null; craneSprites();
+    const ui = o.feature && MODE_UI[o.feature.toUpperCase()];   // «Фонари линий» и «Сгиб» — своя табличка и картинка
+    const txt = ui ? t(ui.name) + ' · ' + (o.n || '') : t('fsIntro', { n: o.n || '' }); let birds = null; craneSprites();
     [0, 0.1, 0.2, 0.3].forEach(d => Snd.rustle(0.32, 0.1, 1100, 3600, d / (G.turbo ? 1.6 : 1)));
     return tfxRun(3.0, 0.92, mid, (c, t, W, H) => {
       const F = envelopeFlaps(W, H), P = wavesPat(Math.min(W, H));
       if (t >= 2.1 && !birds) { birds = craneBurst(LITE ? 20 : 34, W, H); Snd.rustle(0.6, 0.12, 2600, 5200); }
       for (let i = 0; i < 4; i++) { const d0 = 2.1 + (3 - i) * 0.08, pin = eio(seg(t, i * 0.1, i * 0.1 + 0.55)), pout = eio(seg(t, d0, d0 + 0.5)); drawFlap(c, F[i], pin * (1 - pout), W, H, P); }
-      tfxTitle(c, W, H, eob(seg(t, 0.82, 1.3)), seg(t, 2.02, 2.35), txt, tfxImg(MODE_UI.BONUS.img), false);
+      tfxTitle(c, W, H, eob(seg(t, 0.82, 1.3)), seg(t, 2.02, 2.35), txt, tfxImg((ui || MODE_UI.BONUS).img), false);
       drawBurst(c, birds, t - 2.1, W, H);
     });
   },
@@ -3233,7 +3322,7 @@ function bindUi() {
   $('autoStart').onclick = () => { closeModal(); G.auto = AUTO.rounds; AUTO.start = G.balance; updateButtons(); spin(); };
   // бонусные режимы
   $('btnBonus').onclick = tap(() => {
-    if (G.ante) { G.ante = false; showBet(); updateButtons(); return; }   // при включённом анте кнопка называется Deactivate
+    if (G.ante) { G.ante = null; showBet(); updateButtons(); return; }   // при включённом анте кнопка называется Deactivate
     openModal('bonusModal'); buildBonusMenu();
   });
   $('bonusClose').onclick = closeModal;
@@ -3274,7 +3363,7 @@ function playIntro() {
 function buildSplash() {
   const planks = [['BONUS', 'fsName', 'fsText', '0vmin', '4.2s', '0s'], ['SUPER', 'superName', 'superText', '6vmin', '5.1s', '-1.7s'], ['ANTE', 'anteName', 'anteText', '2.5vmin', '4.7s', '-3.1s']];
   $('ldPlanks').innerHTML = planks.map(([m, name, text, drop, sd, sdl], i) => '<div class="ld-plank" style="--i:' + i + ';--drop:' + drop + ';--rope:' + drop + ';--sd:' + sd + ';--sdl:' + sdl + '">' +
-    '<div class="board"><img src="' + MODE_UI[m].img + '" alt=""><b>' + t(name) + '</b><span>' + t(text, { mult: CONFIG.modes.ANTE.cost }) + '</span></div></div>').join('');
+    '<div class="board"><img src="' + MODE_UI[m].img + '" alt=""><b>' + t(name) + '</b><span>' + t(text, { mult: ANTES.map(a => CONFIG.modes[a].cost).join(' / ') }) + '</span></div></div>').join('');
 }
 function waitForTap() {
   return new Promise(res => {
@@ -3335,7 +3424,7 @@ async function boot() {
   // незавершённый раунд из прошлой сессии: показать результат и закрыть
   if (resume) {
     const rMode = String(resume.mode || 'BASE').toUpperCase();
-    if (rMode === 'ANTE') { G.ante = true; showBet(); }   // анте включён, как в прерванном раунде
+    if (ANTES.includes(rMode)) { G.ante = rMode; showBet(); }   // анте включён, как в прерванном раунде
     G.busy = true; updateButtons(); startReels();
     await finishRound(resume, CONFIG.modes[rMode] ? rMode : 'BASE', 0, G.bet);
     G.busy = false; updateButtons();
