@@ -6,7 +6,7 @@
  *   base.scatter  — частота входа в бонус (формула)            -> 1 из bonus-every
  *   fs.wild       — вес вайлда во фриспинах (симуляция)         -> BONUS = rtp × цена
  *   base.wild     — вес вайлда в базовой игре (точный перебор)  -> BASE  = rtp
- *   ante.scatter  — частота скаттера с анте (формула + V_k)     -> ANTE  = rtp × 1.25
+ *   ante2/ante4.scatter — частота скаттера с анте (формула + V_k) -> ANTE2 = rtp × 2, ANTE4 = rtp × 4
  *   super.wild    — вес вайлда в супер-бонусе (симуляция)       -> SUPER = rtp × цена
  * Остальное (выплаты, веса символов, множители, число фриспинов) — дизайн, руками в math.js.
  */
@@ -65,10 +65,12 @@ T.base.wild = solve(lineRtp, 1, 2000, TARGET - bonusPart(T.base.scatter));
 log(`   base.wild = ${T.base.wild.toFixed(4)}: линии ${pct(lineRtp(T.base.wild))} + бонус ${pct(bonusPart(T.base.scatter))}`);
 
 // 5. анте
-const anteCost = CONFIG.modes.ANTE.cost;
-const anteRtp = q => { const t = JSON.parse(JSON.stringify(T)); t.ante.scatter = q; return (exactLines(M.createEngine(t).profiles.ante).rtp + bonusPart(q)) / anteCost; };
-T.ante.scatter = solve(anteRtp, T.base.scatter, 0.6, TARGET);
-log(`5) ante.scatter = ${T.ante.scatter.toFixed(6)} (вход 1 из ${(1 / triggerProb(T.ante.scatter)).toFixed(1)}, оценка RTP ${pct(anteRtp(T.ante.scatter))})`);
+for (const prof of ['ante2', 'ante4']) {
+  const anteCost = CONFIG.modes[prof.toUpperCase()].cost;
+  const anteRtp = q => { const t = JSON.parse(JSON.stringify(T)); t[prof].scatter = q; return (exactLines(M.createEngine(t).profiles[prof]).rtp + bonusPart(q)) / anteCost; };
+  T[prof].scatter = solve(anteRtp, T.base.scatter, 0.6, TARGET);
+  log(`5) ${prof}.scatter = ${T[prof].scatter.toFixed(6)} (вход 1 из ${(1 / triggerProb(T[prof].scatter)).toFixed(1)}, оценка RTP ${pct(anteRtp(T[prof].scatter))})`);
+}
 
 // 6. супер-бонус
 log('6) super.wild по симуляции SUPER:');
@@ -76,7 +78,7 @@ await fitSim('super.wild', 'SUPER', () => T.super.wild, v => { T.super.wild = v;
 
 // округление и запись
 const r = (v, d) => Number(v.toFixed(d));
-T.base.scatter = r(T.base.scatter, 6); T.ante.scatter = r(T.ante.scatter, 6); T.base.wild = r(T.base.wild, 3); T.fs.wild = r(T.fs.wild, 3); T.super.wild = r(T.super.wild, 3);
+T.base.scatter = r(T.base.scatter, 6); T.ante2.scatter = r(T.ante2.scatter, 6); T.ante4.scatter = r(T.ante4.scatter, 6); T.base.wild = r(T.base.wild, 3); T.fs.wild = r(T.fs.wild, 3); T.super.wild = r(T.super.wild, 3);
 const block = 'const TUNE = {\n' + Object.keys(T).map(k => `  ${JSON.stringify(k)}: ${JSON.stringify(T[k]).replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{/g, '{ ').replace(/\}/g, ' }')}`).join(',\n') + '\n};\n';
 log('\n' + block);
 if (process.argv.includes('--write')) {

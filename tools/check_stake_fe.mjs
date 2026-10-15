@@ -31,7 +31,8 @@ const fsTotal = b => (b.events.find(e => e.type === 'freeSpinTrigger') || {}).to
 const WANT = {
   base: [['пустой раунд', b => b.payoutMultiplier === 0], ['выигрыш по линиям', b => !has(b, 'freeSpinTrigger') && b.payoutMultiplier >= 300 && b.payoutMultiplier <= 3000],
     ['крупный выигрыш без бонуса', b => !has(b, 'freeSpinTrigger') && b.payoutMultiplier >= 20000], ['бонус с ретриггером', b => has(b, 'retrigger') && !has(b, 'wincap')], ['потолок', b => has(b, 'wincap')]],
-  ante: [['бонус, 4 скаттера', b => fsTotal(b) === 10 && !has(b, 'wincap') && !has(b, 'retrigger')], ['пустой раунд', b => b.payoutMultiplier === 0]],
+  ante2: [['бонус, 4 скаттера', b => fsTotal(b) === 10 && !has(b, 'wincap') && !has(b, 'retrigger')], ['пустой раунд', b => b.payoutMultiplier === 0]],
+  ante4: [['бонус, 3 скаттера', b => fsTotal(b) === 8 && !has(b, 'wincap')], ['выигрыш по линиям', b => !has(b, 'freeSpinTrigger') && b.payoutMultiplier >= 300]],
   bonus: [['бонус, 5 скаттеров', b => fsTotal(b) === 12 && !has(b, 'wincap')], ['бонус без выигрыша', b => b.payoutMultiplier === 0], ['потолок', b => has(b, 'wincap')]],
   super: [['супербонус', b => !has(b, 'wincap') && b.payoutMultiplier >= 20000 && b.payoutMultiplier <= 60000], ['потолок', b => has(b, 'wincap')]]
 };
@@ -120,9 +121,12 @@ for (const name of Object.keys(picked)) for (const w of picked[name]) {
   if (st.fs || st.sticky) bad(tag, 'после раунда остался режим фриспинов');
   if (/потолок/.test(w.label)) await page.screenshot({ path: path.join(SHOTS, `stake_${name}_cap.png`) });
   rows.push(`${tag}: ${w.book.events.length} событий, выплата ${(w.book.payoutMultiplier / 100).toLocaleString('en-US')}× — на экране ${(st.win / U).toLocaleString('en-US')} при ставке ${BET / U}, ${((Date.now() - t0) / 1000).toFixed(0)} c`);
-  // анте: следующий раунд этого режима должен уйти с mode=ANTE
-  if (name === 'base' && w === picked.base[picked.base.length - 1]) { await page.click('#btnBonus'); await page.click('#anteToggle'); await page.click('#bonusClose'); }
-  if (name === 'ante' && w === picked.ante[picked.ante.length - 1]) await page.click('#btnBonus');   // Deactivate
+  // анте: следующий раунд режима должен уйти с mode=ANTE2 / ANTE4 (уровень выбирается в меню бонус-режимов)
+  const names = Object.keys(picked), nextName = names[names.indexOf(name) + 1];
+  if (w === picked[name][picked[name].length - 1]) {
+    if (/^ante/.test(name)) await page.click('#btnBonus');   // Deactivate
+    if (/^ante/.test(nextName || '')) { await page.click('#btnBonus'); await page.click('#ante' + nextName.toUpperCase()); await page.click('#bonusClose'); }
+  }
 }
 if (errs.length) problems.push(...errs.map(e => 'консоль: ' + e));
 await browser.close(); server.close();

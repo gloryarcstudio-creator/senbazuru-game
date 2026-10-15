@@ -6,7 +6,7 @@
  *   SCATTER — не больше одного на барабан; 3/4/5 скаттеров дают 8/10/12 фриспинов.
  *   Фриспины: каждый выпавший вайлд остаётся на месте до конца бонуса вместе со своим множителем.
  *   Ретриггер: 3+ скаттера во фриспинах добавляют 5 вращений (всего не больше maxFs).
- *   Режимы: BASE 1×, ANTE 1.25× (чаще скаттеры), BONUS 100× (гарантированный вход), SUPER 300× (вход + три стартовых липких вайлда).
+ *   Режимы: BASE 1×, ANTE2 2× и ANTE4 4× (чаще скаттеры), BONUS 100× (гарантированный вход), SUPER 300× (вход + три стартовых липких вайлда).
  *   Все суммы — целые, в сотых долях базовой ставки. Выигрыш раунда обрезается на maxWin×, раунд на этом заканчивается.
  *
  * Раунд = список событий; презентация только воспроизводит их:
@@ -23,7 +23,7 @@ const SYMS = ['L1', 'L2', 'L3', 'L4', 'H4', 'H3', 'H2', 'H1', 'W', 'S'];
 const NPAY = 8, W = 8, S = 9, TOP = 7;
 
 const CONFIG = {
-  game: 'senbazuru', mathVersion: 2,
+  game: 'senbazuru', mathVersion: 3,
   reels: REELS, rows: ROWS, unit: UNIT, maxWin: 15000,
   lines: [[0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [3, 3, 3, 3, 3], [4, 4, 4, 4, 4]],
   // выплаты за 3 / 4 / 5 символов на линии, в сотых долях ставки
@@ -38,7 +38,8 @@ const CONFIG = {
   superStartWilds: 3,
   modes: {
     BASE:  { cost: 1,    profile: 'base' },
-    ANTE:  { cost: 1.25, profile: 'ante' },
+    ANTE2: { cost: 2,    profile: 'ante2' },
+    ANTE4: { cost: 4,    profile: 'ante4' },
     BONUS: { cost: 100,  profile: 'base', force: true },
     SUPER: { cost: 300,  profile: 'base', force: true, super: true }
   }
@@ -48,7 +49,8 @@ const CONFIG = {
 /*TUNE-BEGIN*/
 const TUNE = {
   "base": { "sym": [300, 260, 190, 160, 110, 80, 55, 30], "wild": 129.581, "wildMult": [[2, 70], [3, 25], [5, 5]], "scatter": 0.065131 },
-  "ante": { "scatter": 0.083253 },
+  "ante2": { "scatter": 0.114183 },
+  "ante4": { "scatter": 0.159379 },
   "fs": { "sym": [300, 260, 190, 160, 110, 80, 55, 30], "wild": 73.797, "wildMult": [[2, 50], [3, 30], [5, 15], [10, 5]], "scatter": 0.08 },
   "super": { "wild": 79.532, "wildMult": [[2, 50], [3, 30], [5, 15], [10, 5]], "startMult": [[2, 50], [3, 30], [5, 15], [10, 5]] }
 };
@@ -110,10 +112,11 @@ function cumDist(pairs) { let t = 0; for (const [, w] of pairs) t += w; let a = 
 
 function createEngine(tune) {
   tune = tune || TUNE;
-  const B = tune.base, A = tune.ante, F = tune.fs, X = tune.super;
+  const B = tune.base, F = tune.fs, X = tune.super;
   const P = {
     base: compileProfile(B.sym, B.wild, B.wildMult, B.scatter),
-    ante: compileProfile(B.sym, B.wild, B.wildMult, A.scatter),
+    ante2: compileProfile(B.sym, B.wild, B.wildMult, tune.ante2.scatter),
+    ante4: compileProfile(B.sym, B.wild, B.wildMult, tune.ante4.scatter),
     fs: compileProfile(F.sym, F.wild, F.wildMult, F.scatter),
     super: compileProfile(F.sym, X.wild, X.wildMult, F.scatter)
   };

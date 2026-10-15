@@ -53,7 +53,7 @@ check('в суперфриспинах вайлды чаще', FE.superMoreWilds
 const C = (n, k) => { let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return r; };
 const pTrig = p => { let s = 0; for (let k = E.retrigger.scatters; k <= E.reels; k++) s += C(E.reels, k) * p ** k * (1 - p) ** (E.reels - k); return s; };
 check('вход во фриспины, 1 из N (BASE)', FE.fsOdds.BASE, Math.round(1 / pTrig(TU.base.scatter)));
-check('вход во фриспины, 1 из N (ANTE)', FE.fsOdds.ANTE, Math.round(1 / pTrig(TU.ante.scatter)));
+for (const a of ['ANTE2', 'ANTE4']) check(`вход во фриспины, 1 из N (${a})`, FE.fsOdds[a], Math.round(1 / pTrig(TU[a.toLowerCase()].scatter)));
 
 // выгрузка для Stake: RTP таблиц и частота входа в бонус
 const repPath = path.join(ROOT, 'math/stake_report.json');
@@ -65,14 +65,14 @@ if (fs.existsSync(repPath)) {
   }
   check('RTP на экране, %', FE.rtp.toFixed(2), (rep.base.rtp * 100).toFixed(2));
   check('вход во фриспины, 1 из N (выгрузка BASE)', FE.fsOdds.BASE, Math.round(1 / rep.base.triggerProb));
-  check('вход во фриспины, 1 из N (выгрузка ANTE)', FE.fsOdds.ANTE, Math.round(1 / rep.ante.triggerProb));
+  for (const a of ['ANTE2', 'ANTE4']) check(`вход во фриспины, 1 из N (выгрузка ${a})`, FE.fsOdds[a], Math.round(1 / rep[a.toLowerCase()].triggerProb));
 } else bad.push('нет math/stake_report.json — RTP не сверен');
 
 // поведение, которое правила описывают словами: проверяем на раундах движка
 const facts = { rounds: 0, perReel: 0, wildOff: 0, multBase: new Set(), multFs: new Set(), buyMin: Infinity, superReels: new Set(), superMult: new Set(),
   retrigAdd: new Set(), maxTotal: 0, capLeft: 0, trigWinKept: 0, trigWinRounds: 0, stickyLost: 0 };
-for (const mode of ['BASE', 'ANTE', 'BONUS', 'SUPER']) {
-  const n = mode === 'BASE' || mode === 'ANTE' ? 20000 : 3000;
+for (const mode of Object.keys(E.modes)) {
+  const n = !E.modes[mode].force ? 20000 : 3000;
   for (let seed = 1; seed <= n; seed++) {
     const b = M.book(mode, seed); facts.rounds++;
     let fsMode = false, first = true, stickyPrev = new Set(), total = 0, firstWin = 0;

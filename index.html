@@ -440,6 +440,9 @@ button.sk:active:not(:disabled) .sk-dim{opacity:.2}
 .price{font:400 1.5em/1 var(--font-display);color:var(--hanko)}
 .price small{display:block;margin-top:.25em;font:800 .52em/1 var(--font-ui);color:var(--ink)}
 .modecard .pill{margin-top:auto;min-width:8em}
+.ante-pick{display:flex;flex-wrap:wrap;justify-content:center;gap:.4em;width:100%}
+.ante-pick .pill{min-width:0;flex:1 1 6.5em;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.ante-pick .pill small{font-size:.72em;font-weight:700;opacity:.85}
 .why{font-size:.74em;line-height:1.25;color:var(--hanko)}
 [data-mode="portrait"] .bm-head{flex-direction:column;padding-inline:0;padding-top:.2em}
 [data-mode="portrait"] .bm-title{margin-inline:3.2em}
@@ -744,9 +747,9 @@ const CONFIG = {
   wildReels: [1, 2, 3],                                                   // барабаны 2, 3, 4 (индексы с нуля)
   wildMult: { base: [2, 3, 5], fs: [2, 3, 5, 10], superStart: [2, 3, 5, 10] },
   superStartWilds: 3, superMoreWilds: true,                               // в суперфриспинах вайлды выпадают чаще, чем в обычных
-  fsOdds: { BASE: 400, ANTE: 197 },                                       // вход во фриспины: в среднем 1 раз за N вращений
+  fsOdds: { BASE: 400, ANTE2: 80, ANTE4: 32 },                                       // вход во фриспины: в среднем 1 раз за N вращений
   // режимы RGS: цена в ставках и заявленный RTP (считает математика, здесь только для экрана правил)
-  modes: { BASE: { cost: 1, rtp: 96.00, vol: 4 }, ANTE: { cost: 1.25, rtp: 96.00, vol: 4 }, BONUS: { cost: 100, rtp: 96.00, vol: 4 }, SUPER: { cost: 300, rtp: 96.00, vol: 4 } },   // vol — волатильность по шкале 1–5
+  modes: { BASE: { cost: 1, rtp: 96.00, vol: 4 }, ANTE2: { cost: 2, rtp: 96.00, vol: 4 }, ANTE4: { cost: 4, rtp: 96.00, vol: 4 }, BONUS: { cost: 100, rtp: 96.00, vol: 4 }, SUPER: { cost: 300, rtp: 96.00, vol: 4 } },   // vol — волатильность по шкале 1–5
   bookUnit: 100,        // суммы в событиях раунда: 100 = 1× ставки
   apiUnit: 1000000,     // деньги в API RGS: 1 000 000 = 1.00
   winTiers: [15, 50, 250, 500] // пороги (× ставки) для табличек NICE / BIG / MEGA / EPIC; MAX — потолок maxWin
@@ -906,7 +909,7 @@ const G = {
   live: false, replay: null, social: false, currency: 'USD', balance: 0,
   betLevels: [], betIdx: 0, bet: 0,
   busy: false, auto: 0, turbo: false, sound: true, music: true, sfx: true, space: true, ready: false, canSlam: false, slam: false,
-  board: null, lastWin: 0, modal: null, ante: false, fs: null, log: [],
+  board: null, lastWin: 0, modal: null, ante: null, fs: null, log: [],
   // флаги юрисдикции из config.jurisdiction ответа authenticate
   jur: { disabledTurbo: false, disabledAutoplay: false, disabledBuyFeature: false, disabledSpacebar: false, disabledSlamstop: false, displayRTP: false, minimumRoundDuration: 0 }
 };
@@ -1715,11 +1718,12 @@ function place(el, x, y, w, h) { el.style.left = x + 'px'; el.style.top = y + 'p
 /* ================= интерфейс ================= */
 function setBalance(v) { G.balance = v; $('balanceVal').textContent = money(v); queueFit(); }
 const modeCost = mode => Math.round(G.bet * CONFIG.modes[mode].cost);
-const spinMode = () => (G.ante ? 'ANTE' : 'BASE');
+const ANTES = ['ANTE2', 'ANTE4'];                 // уровни анте: G.ante — null или один из них
+const spinMode = () => (G.ante || 'BASE');
 /* В поле ставки — реальная цена вращения; при анте рядом бейдж ×K. */
 function showBet() {
   $('betVal').textContent = money(modeCost(spinMode())); $('bmBetVal').textContent = money(G.bet);
-  $('anteBadge').hidden = !G.ante; $('anteBadge').textContent = '×' + CONFIG.modes.ANTE.cost;
+  $('anteBadge').hidden = !G.ante; $('anteBadge').textContent = G.ante ? '×' + CONFIG.modes[G.ante].cost : '';
   queueFit();
 }
 function setBet(idx) {
@@ -1772,7 +1776,7 @@ function updateButtons() {
   $('btnTurbo').hidden = J.disabledTurbo; $('btnTurbo').classList.toggle('on', G.turbo); $('btnTurbo').setAttribute('aria-pressed', String(G.turbo));
   // Bonus: при включённом анте — золотая кнопка Deactivate, по нажатию выключает режим
   const bb = $('btnBonus'), bLabel = G.ante ? t('deactivate') + ': ' + t('anteName') : t('aBonus');
-  bb.disabled = lock; bb.classList.toggle('on', G.ante); $('bonusVal').textContent = t(G.ante ? 'deactivate' : 'bonus');
+  bb.disabled = lock; bb.classList.toggle('on', !!G.ante); $('bonusVal').textContent = t(G.ante ? 'deactivate' : 'bonus');
   bb.setAttribute('aria-label', bLabel); bb.title = bLabel;
   const sp = $('btnSpin'), spLabel = t(G.auto > 0 ? 'aStopAuto' : G.busy ? 'aStop' : 'aSpin');
   sp.classList.toggle('auto', G.auto > 0); sp.classList.toggle('busy', G.busy);
@@ -1802,7 +1806,7 @@ function fitModal() {
 }
 function closeModal() { if (G.modal) { Snd.sfx('ui_close'); $(G.modal).hidden = true; G.modal = null; } }
 const errorText = e => t({ ERR_IPB: 'errIPB', ERR_IS: 'errIS', ERR_ATE: 'errATE', ERR_GLE: 'errGLE', ERR_LOC: 'errLOC', ERR_MAINTENANCE: 'errMAINT', ERR_VAL: 'errVAL' }[e && e.code] || 'errGEN');
-const modeName = m => (I18N.en['mode' + m] ? t('mode' + m) : (G.social ? socialize(m) : m));
+const modeName = m => (ANTES.includes(m) ? t('modeANTE') + ' ×' + CONFIG.modes[m].cost : I18N.en['mode' + m] ? t('mode' + m) : (G.social ? socialize(m) : m));
 
 /* Меню раскрывается вверх над кнопкой Menu: Info, Settings, Sound. Если сверху мало места (маленький попап) — в строку. */
 function placeMenu() {
@@ -1838,7 +1842,7 @@ function buildInfo() {
     a: '×' + WM.base[0], b: '×' + WM.base[1], ab: '×' + WM.base[0] * WM.base[1],
     min: fsKeys[0], maxFs: CONFIG.maxFs, add: CONFIG.retrigger.add, n: CONFIG.superStartWilds,
     lo: '×' + Math.min(...WM.superStart), hi: '×' + Math.max(...WM.superStart),
-    oddsBase: num(CONFIG.fsOdds.BASE), oddsAnte: num(CONFIG.fsOdds.ANTE), mult: CONFIG.modes.ANTE.cost
+    oddsBase: num(CONFIG.fsOdds.BASE), oddsAnte: num(CONFIG.fsOdds.ANTE2), mult: CONFIG.modes.ANTE2.cost
   };
   if (lang === 'ar') for (const k of Object.keys(vars)) if (/[×\d]/.test(String(vars[k]))) vars[k] = '\u2066' + vars[k] + '\u2069';   // LTR-изоляция чисел внутри арабского текста
   const T = (k, v) => esc(t(k, Object.assign({}, vars, v || {})));
@@ -1897,7 +1901,7 @@ function buildInfo() {
 
   // 7) бонус-режимы и цены
   const price = (m, key) => '<span class="price">' + esc(money(modeCost(m))) + '</span><small class="pricex">' + T(key, { x: CONFIG.modes[m].cost }) + '</small>';
-  let modes = card(img(MODE_UI.ANTE.img, ''), esc(modeName('ANTE')), T('anteInfo'), price('ANTE', 'perSpin'));
+  let modes = ANTES.map(m => card(img(MODE_UI.ANTE.img, ''), esc(modeName(m)), T('anteInfo', { oddsAnte: num(CONFIG.fsOdds[m]) }), price(m, 'perSpin'))).join('');
   if (buys) {
     modes += card(img(MODE_UI.BONUS.img, ''), esc(modeName('BONUS')), T('bonusInfo'), price('BONUS', 'xBet'));
     modes += card(img(MODE_UI.SUPER.img, ''), esc(modeName('SUPER')), T('superInfo'), price('SUPER', 'xBet'));
@@ -1978,20 +1982,31 @@ function buildBonusMenu() {
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   for (const m of ['ANTE', 'BONUS', 'SUPER']) {
     if (m !== 'ANTE' && G.jur.disabledBuyFeature) continue;
-    const ui = MODE_UI[m], isAnte = m === 'ANTE', locked = !isAnte && G.ante;
+    const ui = MODE_UI[m], isAnte = m === 'ANTE', locked = !isAnte && !!G.ante;
     const c = el('div', 'plank modecard' + (isAnte && G.ante ? ' on' : '')); c.dataset.mode = m;
     const img = el('img'); img.src = ui.img; img.alt = ''; c.appendChild(img);
     c.appendChild(el('b', '', t(ui.name)));
-    c.appendChild(el('span', 'desc', t(ui.text, { mult: CONFIG.modes.ANTE.cost })));
+    c.appendChild(el('span', 'desc', t(ui.text, { mult: isAnte ? ANTES.map(a => CONFIG.modes[a].cost).join(' / ') : '' })));
     const vol = el('span', 'vol'); vol.appendChild(el('span', '', t('volatility')));
-    const bars = el('span', 'bars'); for (let i = 0; i < 5; i++) bars.appendChild(el('i', i < CONFIG.modes[m].vol ? 'f' : '')); vol.appendChild(bars);
+    const bars = el('span', 'bars'); for (let i = 0; i < 5; i++) bars.appendChild(el('i', i < CONFIG.modes[isAnte ? 'ANTE2' : m].vol ? 'f' : '')); vol.appendChild(bars);
     vol.appendChild(el('em', '', t('volHigh'))); c.appendChild(vol);
     const foot = el('div', 'foot');
+    if (isAnte) {   // анте: два уровня, у каждого своя кнопка; нажатие на включённый уровень выключает анте
+      const pick = el('div', 'ante-pick');
+      for (const a of ANTES) {
+        const on = G.ante === a, b = el('button', 'pill' + (on ? '' : ' go')); b.type = 'button'; b.id = 'ante' + a; b.dataset.ante = a;
+        b.appendChild(el('span', '', t(on ? 'deactivate' : 'activate'))); b.appendChild(el('small', '', priceX(a) + ' · ' + money(modeCost(a))));
+        b.setAttribute('aria-pressed', String(on));
+        b.onclick = () => { G.ante = on ? null : a; Snd.ui(G.ante ? 'ante_on' : 'ante_off'); showBet(); updateButtons(); buildBonusMenu(); };
+        pick.appendChild(b);
+      }
+      const price = el('span', 'price', ANTES.map(priceX).join(' / ')); price.appendChild(el('small', '', ANTES.map(a => money(modeCost(a))).join(' / ')));
+      foot.appendChild(price); foot.appendChild(pick); c.appendChild(foot); box.appendChild(c); continue;
+    }
     const price = el('span', 'price', priceX(m)); price.appendChild(el('small', '', money(modeCost(m)))); foot.appendChild(price);
-    const b = el('button', 'pill' + (isAnte && G.ante ? '' : ' go'), t(isAnte ? (G.ante ? 'deactivate' : 'activate') : 'buy')); b.type = 'button'; b.id = isAnte ? 'anteToggle' : 'buy' + m;
-    b.disabled = locked || (!isAnte && G.balance < modeCost(m));
-    b.onclick = isAnte ? () => { G.ante = !G.ante; Snd.ui(G.ante ? 'ante_on' : 'ante_off'); showBet(); updateButtons(); buildBonusMenu(); }
-      : () => { Snd.click(); buySel = m; $('modeCards').hidden = true; $('bonusConfirm').hidden = false;
+    const b = el('button', 'pill go', t('buy')); b.type = 'button'; b.id = 'buy' + m;
+    b.disabled = locked || G.balance < modeCost(m);
+    b.onclick = () => { Snd.click(); buySel = m; $('modeCards').hidden = true; $('bonusConfirm').hidden = false;
         $('buyImg').src = ui.img; $('buyQ').textContent = t('buyQuestion', { name: t(ui.name) });
         $('buyPrice').textContent = priceX(m) + ' · ' + money(modeCost(m));
         const ok = $('buyConfirm'); ok.textContent = t('buyConfirm', { price: money(modeCost(m)) }); ok.disabled = G.balance < modeCost(m); fitBonusMenu(); ok.focus(); };
@@ -3233,7 +3248,7 @@ function bindUi() {
   $('autoStart').onclick = () => { closeModal(); G.auto = AUTO.rounds; AUTO.start = G.balance; updateButtons(); spin(); };
   // бонусные режимы
   $('btnBonus').onclick = tap(() => {
-    if (G.ante) { G.ante = false; showBet(); updateButtons(); return; }   // при включённом анте кнопка называется Deactivate
+    if (G.ante) { G.ante = null; showBet(); updateButtons(); return; }   // при включённом анте кнопка называется Deactivate
     openModal('bonusModal'); buildBonusMenu();
   });
   $('bonusClose').onclick = closeModal;
@@ -3274,7 +3289,7 @@ function playIntro() {
 function buildSplash() {
   const planks = [['BONUS', 'fsName', 'fsText', '0vmin', '4.2s', '0s'], ['SUPER', 'superName', 'superText', '6vmin', '5.1s', '-1.7s'], ['ANTE', 'anteName', 'anteText', '2.5vmin', '4.7s', '-3.1s']];
   $('ldPlanks').innerHTML = planks.map(([m, name, text, drop, sd, sdl], i) => '<div class="ld-plank" style="--i:' + i + ';--drop:' + drop + ';--rope:' + drop + ';--sd:' + sd + ';--sdl:' + sdl + '">' +
-    '<div class="board"><img src="' + MODE_UI[m].img + '" alt=""><b>' + t(name) + '</b><span>' + t(text, { mult: CONFIG.modes.ANTE.cost }) + '</span></div></div>').join('');
+    '<div class="board"><img src="' + MODE_UI[m].img + '" alt=""><b>' + t(name) + '</b><span>' + t(text, { mult: ANTES.map(a => CONFIG.modes[a].cost).join(' / ') }) + '</span></div></div>').join('');
 }
 function waitForTap() {
   return new Promise(res => {
@@ -3335,7 +3350,7 @@ async function boot() {
   // незавершённый раунд из прошлой сессии: показать результат и закрыть
   if (resume) {
     const rMode = String(resume.mode || 'BASE').toUpperCase();
-    if (rMode === 'ANTE') { G.ante = true; showBet(); }   // анте включён, как в прерванном раунде
+    if (ANTES.includes(rMode)) { G.ante = rMode; showBet(); }   // анте включён, как в прерванном раунде
     G.busy = true; updateButtons(); startReels();
     await finishRound(resume, CONFIG.modes[rMode] ? rMode : 'BASE', 0, G.bet);
     G.busy = false; updateButtons();
